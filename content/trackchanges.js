@@ -1,0 +1,166 @@
+/* Track changes: keep track of editor buffers and allow changes to be shown.
+ *
+ * Manages the (per view) tracker instances, setting up and tearing down where
+ * appropriate.
+ *
+ * See KD 295: Track Changes
+ */
+
+if (typeof(ko) === 'undefined') {
+    var ko = {};
+}
+if (typeof(ko.changeTracker) === 'undefined') {
+    ko.changeTracker = {};
+}
+
+(function() {
+
+var log = require("ko/logging").getLogger("CT::trackchanges.js");
+//log.setLevel(ko.logging.LOG_INFO);
+
+// TODO: Move const for margin number to core editor file.
+const MARGIN_CHANGEMARGIN = 3;
+
+/**
+ * Responsible for creating and deleting ChangeTracker objects, and associating
+ * each one with a view.
+ */
+
+this.init = function() {
+    this.onViewOpenedHandlerBound = this.onViewOpenedHandler.bind(this);
+    this.onViewClosedHandlerBound = this.onViewClosedHandler.bind(this);
+    this.onWindowClosingHandlerBound = this.onWindowClosingHandler.bind(this);
+    this.onEditorTextModifiedBound = this.onEditorTextModified.bind(this);
+    this.onEditorMarginClickedBound = this.onEditorMarginClicked.bind(this);
+    this.onMarginGetTooltipTextBound = this.onMarginGetTooltipText.bind(this);
+    window.addEventListener('editor_margin_get_tooltiptext', this.onMarginGetTooltipTextBound, true);
+    window.addEventListener('editor_margin_clicked', this.onEditorMarginClickedBound, true);
+    window.addEventListener("editor_text_modified", this.onEditorTextModifiedBound, false);
+    window.addEventListener('view_document_attached', this.onViewOpenedHandlerBound, false);
+    window.addEventListener('view_document_detaching', this.onViewClosedHandlerBound, false);
+    window.addEventListener('unload', this.onWindowClosingHandlerBound, false);
+
+    Services.obs.addObserver(this, "file_status", false);
+
+    // And because this method might have been called after documents were
+    // loaded, we need to set up the changeTracker for existing ones.
+    ko.views.manager.getAllViews('editor').forEach(function(view) {
+        if (!('showChangesInMargin' in view)) {
+            //log.debug(">> force an open view for " + view.koDoc.displayPath);
+            this.onViewOpenedHandler({originalTarget: view});
+        }
+    }.bind(this));
+};
+
+this.onWindowClosingHandler = function() {
+    window.removeEventListener('editor_margin_get_tooltiptext', this.onMarginGetTooltipTextBound, false);
+    window.removeEventListener('editor_margin_clicked', this.onEditorMarginClickedBound, false);
+    window.removeEventListener('editor_text_modified', this.onEditorTextModifiedBound, false);
+    window.removeEventListener('view_document_attached', this.onViewOpenedHandlerBound, false);
+    window.removeEventListener('view_document_detaching', this.onViewClosedHandlerBound, false);
+    window.removeEventListener('unload', this.onWindowClosingHandlerBound, false);
+
+    Services.obs.removeObserver(this, "file_status");
+};
+
+this.observe = function(subject, topic, data) {
+    if (topic == "file_status") {
+        var urllist = data.split('\n');
+        var view, views;
+        for (var u=0; u < urllist.length; ++u) {
+            views = ko.views.manager.topView.findViewsForURI(urllist[u]);
+            for (var i=0; i < views.length; ++i) {
+                view = views[i];
+                if ('changeTracker' in view && view.changeTracker.enabled) {
+                    view.changeTracker.updateWithDelay();
+                }
+            }
+        }
+    }
+}
+
+this.onViewOpenedHandler = function(event) {
+    var view = event.originalTarget;
+    if (view.getAttribute("type") != "editor") {
+        return;
+    }
+
+    view.enabled = view.prefs.getLongPref("showChangesInMargin");
+
+    var tracker = require("trackchanges/tracker");
+    view.changeTracker = new tracker.ChangeTracker(view);
+
+    // TODO: Delay initialization for batch files.
+    //if (!ko.views.manager.batchMode) {
+    view.changeTracker.updateWithDelay();
+};
+
+this.onViewClosedHandler = function(event) {
+    var view = event.originalTarget;
+    if (view.changeTracker) {
+        view.changeTracker.close();
+        view.changeTracker = null;
+    }
+};
+
+const AllowedModifications = (Ci.ISciMoz.SC_MOD_INSERTTEXT |Ci.ISciMoz.SC_MOD_DELETETEXT);
+this.onEditorTextModified = function(event) {
+    try {
+        if ((event.data.modificationType & AllowedModifications) == 0) {
+            return;
+        }
+        var view = event.data.view;
+        var changeTracker = view.changeTracker;
+        if (!changeTracker || !changeTracker.enabled) {
+            return;
+        }
+        changeTracker.updateWithDelay();
+    } catch(ex) {
+        log.exception(ex, "changeTracker error: onEditorTextModified");
+    }
+};
+
+this.onEditorMarginClicked = function(event) {
+    try {
+        if (event.detail.margin != MARGIN_CHANGEMARGIN) {
+            return;
+        }
+        var view = event.detail.view;
+        if (view.changeTracker && view.changeTracker.enabled) {
+            view.changeTracker.showChanges(event.detail.line);
+            // Mark the event as handled.
+            event.preventDefault();
+        }
+    } catch(ex) {
+        log.exception(ex, "changeTracker error: onEditorMarginClicked");
+    }
+};
+
+this.onMarginGetTooltipText = function(event) {
+    try {
+        // Hovering over a change-margin?
+        if (event.detail.margin == MARGIN_CHANGEMARGIN) {
+            var view = event.detail.view;
+            if (view.changeTracker && view.changeTracker.enabled) {
+                let text = view.changeTracker.getTooltipText(event.detail.line);
+                if (text) {
+                    event.detail.text = text;
+                    // Mark the event as handled.
+                    event.preventDefault();
+                }
+            }
+        }
+    } catch(ex) {
+        log.exception(ex, "changeTracker error: onMarginGetTooltipText");
+    }
+};
+
+}).apply(ko.changeTracker);
+
+
+window.addEventListener("komodo-ui-started", ko.changeTracker.init.bind(ko.changeTracker), false);
+
+// TODO: Listen for pref changes and update accordingly.
+//  'showChangesInMargin',
+//  'editor-scheme',
+//  'scheme-changed',

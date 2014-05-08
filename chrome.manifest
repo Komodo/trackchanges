@@ -1,0 +1,7 @@
+content trackchanges jar:trackchanges.jar!/content/
+skin trackchanges classic/1.0 jar:trackchanges.jar!/skin/
+locale trackchanges en-US jar:trackchanges.jar!/locale/en-US/
+
+overlay chrome://komodo/content/komodo.xul chrome://trackchanges/content/overlay.xul
+
+category require-path trackchanges chrome://trackchanges/content/

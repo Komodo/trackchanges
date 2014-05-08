@@ -1,0 +1,63 @@
+#include "nsISupports.idl"
+
+#include "koIDocument.idl"
+#include "koIViews.idl"
+#include "ISciMoz.idl"
+
+[scriptable, uuid(39917091-2cb4-42bc-958b-e0c3b4ad7f19)]
+interface koIChangeTrackerHandler : nsISupports
+{
+    void onError(in AString message);
+    void markChanges(in unsigned long deletion_count,
+                     [array,  size_is(deletion_count)] in long deletion_lines,
+                     // Insertion lines come in pairs, (start, end).
+                     in unsigned long insertion_count,
+                     [array,  size_is(insertion_count)] in long insertion_lines,
+                     // Modified lines come in pairs, (start, end).
+                     in unsigned long modified_count,
+                     [array,  size_is(modified_count)] in long modified_lines
+                    );
+};
+
+
+// Works with koDoc to determine the file changes.
+[scriptable, uuid(6018f475-6ad0-4158-ba32-500607ba60dc)]
+interface koIChangeTracker : nsISupports
+{
+    const long CHANGES_NONE = 0;
+    const long CHANGES_INSERT = 1;
+    const long CHANGES_DELETE = 2;
+    const long CHANGES_REPLACE = 3;
+
+    void init(in koIDocument koDoc);
+    void finalize();
+
+    void updateChangeTracker(in koIChangeTrackerHandler handler);
+
+    void getOldAndNewLines(in long lineNo,
+                           in long changeMask,
+                           out boolean oldEndsWithEOL,
+                           out boolean newEndsWithEOL,
+                           out unsigned long oldLineRangeCount,
+                           [array, size_is(oldLineRangeCount)] out long oldLineRange,
+                           out unsigned long newLineRangeCount,
+                           [array, size_is(newLineRangeCount)] out long newLineRange,
+                           out unsigned long oldCount,
+                           [array, size_is(oldCount)] out wstring oldLines,
+                           out unsigned long newCount,
+                           [array, size_is(newCount)] out wstring newLines);
+};
+
+
+    ///**
+    // * Return an array of koIDiffOpcode's that describe how to change text
+    // * from the list on-disk to the text in memory.
+    // *
+    // * @returns:
+    // *     array of change instructions (koIDiffOpcode's)
+    // */
+    //void getUnsavedChangeInstructions([optional] out unsigned long count,
+    //                                  [array, size_is(count), retval]
+    //                                      out koIDiffOpcode diffs
+    //                                  );
+    //
