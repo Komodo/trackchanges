@@ -22,7 +22,7 @@ exports.MarginController = function MarginController(view) {
     // Remember the margin change positions.
     this.previous_deletions = new Set();
     this.previous_insertions = new Set();
-    this.previous_modifications = new Set();
+    this.previous_replacements = new Set();
     // Setup the margin styling.
     this.refreshMarginProperies();
 };
@@ -205,7 +205,7 @@ exports.MarginController.prototype = {
         }
         this.previous_deletions = new Set();
         this.previous_insertions = new Set();
-        this.previous_modifications = new Set();
+        this.previous_replacements = new Set();
     },
 
     clearLineNos: function(lineNos) {
@@ -222,12 +222,12 @@ exports.MarginController.prototype = {
             return 1 << CHANGES_DELETE;
         if (this.previous_insertions.has(lineNo))
             return 1 << CHANGES_INSERT;
-        if (this.previous_modifications.has(lineNo))
+        if (this.previous_replacements.has(lineNo))
             return 1 << CHANGES_REPLACE;
         return 0;
     },
 
-    markChanges: function(deletions, insertion_ranges, modification_ranges) {
+    markChanges: function(deletions, insertion_ranges, replacement_ranges) {
         var linesFromLineRange = function(range) {
             var linenos = [];
             for (var i=0; i < range.length; i += 2) {
@@ -242,20 +242,20 @@ exports.MarginController.prototype = {
         // Turn into sets of line numbers.
         deletions = new Set(deletions);
         var insertions = new Set(linesFromLineRange(insertion_ranges));
-        var modifications = new Set(linesFromLineRange(modification_ranges));
+        var replacements = new Set(linesFromLineRange(replacement_ranges));
 
         // Determine old margin entries that need removal.
         var expired_deletions = [x for (x of this.previous_deletions) if (!(deletions.has(x)))];
         var expired_insertions = [x for (x of this.previous_insertions) if (!(insertions.has(x)))];
-        var expired_modifications = [x for (x of this.previous_modifications) if (!(modifications.has(x)))];
-        this.clearLineNos(expired_deletions);
-        this.clearLineNos(expired_insertions);
-        this.clearLineNos(expired_modifications);
+        var expired_replacements = [x for (x of this.previous_replacements) if (!(replacements.has(x)))];
+        this.clearLineNos(expired_deletions, this.deleteStyleString);
+        this.clearLineNos(expired_insertions, this.insertStyleString);
+        this.clearLineNos(expired_replacements, this.replaceStyleString);
 
-        // Determine new modification positions, that don't already exist.
+        // Determine new replacement positions, that don't already exist.
         var new_deletions = [x for (x of deletions) if (!(this.previous_deletions.has(x)))];
         var new_insertions = [x for (x of insertions) if (!(this.previous_insertions.has(x)))];
-        var new_modifications = [x for (x of modifications) if (!(this.previous_modifications.has(x)))];
+        var new_replacements = [x for (x of replacements) if (!(this.previous_replacements.has(x)))];
 
         const scimoz = this.view.scimoz;
         var margin = this;
@@ -268,15 +268,15 @@ exports.MarginController.prototype = {
         new_insertions.forEach(function(lineNo) {
             margin._specificMarkerSet(lineNo, margin.insertStyleString, scimoz);
         });
-        // Add the new modification positions.
-        new_modifications.forEach(function(lineNo) {
+        // Add the new replacement positions.
+        new_replacements.forEach(function(lineNo) {
             margin._specificMarkerSet(lineNo, margin.replaceStyleString, scimoz);
         });
 
         // And store them for the next time.
         this.previous_deletions = deletions;
         this.previous_insertions = insertions;
-        this.previous_modifications = modifications;
+        this.previous_replacements = replacements;
     },
 
     __EOF__: null
