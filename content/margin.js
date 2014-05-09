@@ -126,26 +126,31 @@ exports.MarginController.prototype = {
         uses byte-strings of concatenated style numbers, but the implementation
         can't handle null bytes */
         this.clearStyleNum = 1;
-        this.clearStyle = String.fromCharCode(this.clearStyleNum);
 
         const defaultBackColor = scimoz.styleGetBack(scimoz.STYLE_LINENUMBER);
         scimoz.styleSetBack(this.clearStyleNum + styleOffset, defaultBackColor);
         scimoz.styleSetSize(this.clearStyleNum + styleOffset, marginCharacterSize);
 
-        this.insertStyleNum = this.clearStyleNum + 1;
+        const insertStyleNum = this.clearStyleNum + 1;
         const insertBackColor = insertColor;
-        scimoz.styleSetBack(this.insertStyleNum + styleOffset, insertBackColor);
-        scimoz.styleSetSize(this.insertStyleNum + styleOffset, marginCharacterSize);
+        scimoz.styleSetBack(insertStyleNum + styleOffset, insertBackColor);
+        scimoz.styleSetSize(insertStyleNum + styleOffset, marginCharacterSize);
 
-        this.deleteStyleNum = this.clearStyleNum + 2;
+        const deleteStyleNum = this.clearStyleNum + 2;
         const deleteBackColor = deleteColor;
-        scimoz.styleSetBack(this.deleteStyleNum + styleOffset, deleteBackColor);
-        scimoz.styleSetSize(this.deleteStyleNum + styleOffset, marginCharacterSize);
+        scimoz.styleSetBack(deleteStyleNum + styleOffset, deleteBackColor);
+        scimoz.styleSetSize(deleteStyleNum + styleOffset, marginCharacterSize);
 
-        this.replaceStyleNum = this.clearStyleNum + 3;
+        const replaceStyleNum = this.clearStyleNum + 3;
         const replaceBackColor = replaceColor;
-        scimoz.styleSetBack(this.replaceStyleNum + styleOffset, replaceBackColor);
-        scimoz.styleSetSize(this.replaceStyleNum + styleOffset, marginCharacterSize);
+        scimoz.styleSetBack(replaceStyleNum + styleOffset, replaceBackColor);
+        scimoz.styleSetSize(replaceStyleNum + styleOffset, marginCharacterSize);
+
+        // Create string variants, as the marginSetText takes a string.
+        this.clearStyleString = String.fromCharCode(this.clearStyleNum);
+        this.insertStyleString = String.fromCharCode(insertStyleNum);
+        this.deleteStyleString = String.fromCharCode(deleteStyleNum);
+        this.replaceStyleString = String.fromCharCode(replaceStyleNum);
     },
 
     _initMargins: function() {
@@ -160,12 +165,12 @@ exports.MarginController.prototype = {
         scimoz.setMarginSensitiveN(MARGIN_CHANGEMARGIN, true);
     },
 
-    _specificMarkerSet: function(line, styleNum, scimoz) {
+    _specificMarkerSet: function(line, styleString, scimoz) {
         if (!scimoz) {
             scimoz = this.view.scimoz;
         }
         scimoz.marginSetText(line, " ");
-        scimoz.marginSetStyles(line, String.fromCharCode(styleNum));
+        scimoz.marginSetStyles(line, styleString);
     },
 
 
@@ -196,7 +201,7 @@ exports.MarginController.prototype = {
         const scimoz = this.view.scimoz;
         const lim = scimoz.lineCount;
         for (let lineNo = 0; lineNo < lim; lineNo++) {
-            scimoz.marginSetStyles(lineNo, this.clearStyle);
+            scimoz.marginSetStyles(lineNo, this.clearStyleString);
         }
         this.previous_deletions = new Set();
         this.previous_insertions = new Set();
@@ -208,7 +213,7 @@ exports.MarginController.prototype = {
         // could have changed.
         const scimoz = this.view.scimoz;
         for (let lineNo of lineNos) {
-            scimoz.marginSetStyles(lineNo, this.clearStyle);
+            scimoz.marginSetStyles(lineNo, this.clearStyleString);
         }
     },
 
@@ -257,15 +262,15 @@ exports.MarginController.prototype = {
 
         // Add the new deletion positions.
         new_deletions.forEach(function(lineNo) {
-            margin._specificMarkerSet(lineNo, margin.deleteStyleNum, scimoz);
+            margin._specificMarkerSet(lineNo, margin.deleteStyleString, scimoz);
         });
         // Add the new insertion positions.
         new_insertions.forEach(function(lineNo) {
-            margin._specificMarkerSet(lineNo, margin.insertStyleNum, scimoz);
+            margin._specificMarkerSet(lineNo, margin.insertStyleString, scimoz);
         });
         // Add the new modification positions.
         new_modifications.forEach(function(lineNo) {
-            margin._specificMarkerSet(lineNo, margin.replaceStyleNum, scimoz);
+            margin._specificMarkerSet(lineNo, margin.replaceStyleString, scimoz);
         });
 
         // And store them for the next time.
