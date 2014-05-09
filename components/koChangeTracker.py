@@ -145,11 +145,11 @@ class DocumentChangeTracker(object):
             deleted_lines = deleted_text_line_range.keys()
             inserted_lines = list(chain(*(last_insertions.items())))
             modified_lines = list(chain(*(last_modifications.items())))
-            log.debug("changes for %s are:\n"
-                      "  deleted_lines: %r %s"
-                      "  inserted_lines: %r %s"
-                      "  modified_lines: %r %s",
-                      self.koDoc.file.leafName, deleted_lines, inserted_lines)
+            log.debug("changes for %r\n"
+                      "  deleted_lines: %r\n"
+                      "  inserted_lines: %r\n"
+                      "  modified_lines: %r",
+                      self.koDoc.file.leafName, deleted_lines, inserted_lines, modified_lines)
             try:
                 handler.markChanges(deleted_lines, inserted_lines, modified_lines)
             except Exception as innex:
