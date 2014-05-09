@@ -14,7 +14,7 @@ import difflibex
 #-- Globals variables
 
 log = logging.getLogger('koChangeTracker')
-log.setLevel(logging.DEBUG)
+#log.setLevel(logging.DEBUG)
 
 #-- Internal functions
 
@@ -145,9 +145,11 @@ class DocumentChangeTracker(object):
             deleted_lines = deleted_text_line_range.keys()
             inserted_lines = list(chain(*(last_insertions.items())))
             modified_lines = list(chain(*(last_modifications.items())))
-            print '  deleted_lines: %r %s' % (deleted_lines, self.koDoc.file.leafName)
-            print '  inserted_lines: %r %s' % (inserted_lines, self.koDoc.file.leafName)
-            print '  modified_lines: %r %s' % (modified_lines, self.koDoc.file.leafName)
+            log.debug("changes for %s are:\n"
+                      "  deleted_lines: %r %s"
+                      "  inserted_lines: %r %s"
+                      "  modified_lines: %r %s",
+                      self.koDoc.file.leafName, deleted_lines, inserted_lines)
             try:
                 handler.markChanges(deleted_lines, inserted_lines, modified_lines)
             except Exception as innex:
