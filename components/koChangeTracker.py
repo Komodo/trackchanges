@@ -18,11 +18,13 @@ log.setLevel(logging.DEBUG)
 
 #-- Internal functions
 
-def diffToKoIDiffOpcode(diffCode):
-    opcode = components.classes["@activestate.com/koDiffOpcode;1"] \
-             .createInstance(components.interfaces.koIDiffOpcode)
-    opcode.init(*diffCode)
-    return opcode
+class DiffOpCode(object):
+    def __init__(self, tag, i1, i2, j1, j2):
+        self.tag = tag
+        self.i1 = i1
+        self.i2 = i2
+        self.j1 = j1
+        self.j2 = j2
 
 ################################################################################
 #                           Track Changes
@@ -162,8 +164,8 @@ class DocumentChangeTracker(object):
         [instruction, oldStart, oldEnd, newStart, newEnd].  See
         difflib.py::SequenceManager.get_opcodes for more documentation.
         """
-        diffOpcode = diffToKoIDiffOpcode
-        return [diffOpcode(diff) for diff in
+        opCode = DiffOpCode
+        return [opCode(*diff) for diff in
                 difflibex.SequenceMatcher(a=left_lines, b=right_lines).get_opcodes()]
 
     def _notifyFileChanges(self, handler, ondisk_lines):
