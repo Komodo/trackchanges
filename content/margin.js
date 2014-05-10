@@ -14,8 +14,12 @@ const CHANGES_INSERT = Ci.koIDocument.CHANGES_INSERT;
 const CHANGES_DELETE = Ci.koIDocument.CHANGES_DELETE;
 const CHANGES_REPLACE = Ci.koIDocument.CHANGES_REPLACE;
 
+// Used for checking the marker position cache.
+const CACHE_VALID = 0;
+const CACHE_OUT_OF_DATE = 1;
+
 var log = require("ko/logging").getLogger("CT::margin.js");
-//log.setLevel(ko.logging.LOG_INFO);
+//log.setLevel(log.INFO);
 
 exports.MarginController = function MarginController(view) {
     this.view = view;
@@ -165,6 +169,15 @@ exports.MarginController.prototype = {
         scimoz.setMarginSensitiveN(MARGIN_CHANGEMARGIN, true);
     },
 
+    _isMarkerSetOnLine: function(scimoz, styleString, lineNo) {
+        var resultObj = {};
+        scimoz.marginGetStyles(lineNo, resultObj);
+        if (resultObj.value != styleString) {
+            return false;
+        }
+        return true;
+    },
+
     _specificMarkerSet: function(line, styleString, scimoz) {
         if (!scimoz) {
             scimoz = this.view.scimoz;
@@ -208,13 +221,17 @@ exports.MarginController.prototype = {
         this.previous_replacements = new Set();
     },
 
-    clearLineNos: function(lineNos) {
+    clearLineNos: function(lineNos, styleString) {
         // We can't use the held deletion/insertion lists because the line numbers
         // could have changed.
         const scimoz = this.view.scimoz;
         for (let lineNo of lineNos) {
+            if (!this._isMarkerSetOnLine(scimoz, styleString, lineNo)) {
+                return CACHE_OUT_OF_DATE;
+            }
             scimoz.marginSetStyles(lineNo, this.clearStyleString);
         }
+        return CACHE_VALID;
     },
 
     activeMarkerMask: function(lineNo) {
@@ -239,6 +256,9 @@ exports.MarginController.prototype = {
             return linenos;
         }
 
+        // TODO: This caching code is quite complicated - perhaps it's just
+        //       better to just delete all markers and just re-add them.
+
         // Turn into sets of line numbers.
         deletions = new Set(deletions);
         var insertions = new Set(linesFromLineRange(insertion_ranges));
@@ -248,17 +268,42 @@ exports.MarginController.prototype = {
         var expired_deletions = [x for (x of this.previous_deletions) if (!(deletions.has(x)))];
         var expired_insertions = [x for (x of this.previous_insertions) if (!(insertions.has(x)))];
         var expired_replacements = [x for (x of this.previous_replacements) if (!(replacements.has(x)))];
-        this.clearLineNos(expired_deletions, this.deleteStyleString);
-        this.clearLineNos(expired_insertions, this.insertStyleString);
-        this.clearLineNos(expired_replacements, this.replaceStyleString);
+        // Remove the expired entries.
+        if (this.clearLineNos(expired_deletions, this.deleteStyleString) == CACHE_OUT_OF_DATE ||
+            this.clearLineNos(expired_insertions, this.insertStyleString) == CACHE_OUT_OF_DATE ||
+            this.clearLineNos(expired_replacements, this.replaceStyleString) == CACHE_OUT_OF_DATE)
+        {
+            // Cache is out-of-date, reset all entries.
+            log.info("Cache is out of date (deleted positions) - clearing");
+            this.clear();
+        }
+
+        const scimoz = this.view.scimoz;
+        var margin = this;
+
+        // Check the cached change positions that are not getting modified in this update.
+        var unchanged_deletions = [x for (x of this.previous_deletions) if ((deletions.has(x)))];
+        var unchanged_insertions = [x for (x of this.previous_insertions) if ((insertions.has(x)))];
+        var unchanged_replacements = [x for (x of this.previous_replacements) if ((replacements.has(x)))];
+        if (unchanged_deletions.some(function(lineNo) {
+                return !margin._isMarkerSetOnLine(scimoz, margin.deleteStyleString, lineNo);
+            }) ||
+            unchanged_insertions.some(function(lineNo) {
+                return !margin._isMarkerSetOnLine(scimoz, margin.insertStyleString, lineNo);
+            }) ||
+            unchanged_replacements.some(function(lineNo) {
+                return !margin._isMarkerSetOnLine(scimoz, margin.replaceStyleString, lineNo);
+            }))
+        {
+            // Cache is out-of-date, reset all entries.
+            log.info("Cache is out of date (unchanged positions) - clearing");
+            this.clear();
+        }
 
         // Determine new replacement positions, that don't already exist.
         var new_deletions = [x for (x of deletions) if (!(this.previous_deletions.has(x)))];
         var new_insertions = [x for (x of insertions) if (!(this.previous_insertions.has(x)))];
         var new_replacements = [x for (x of replacements) if (!(this.previous_replacements.has(x)))];
-
-        const scimoz = this.view.scimoz;
-        var margin = this;
 
         // Add the new deletion positions.
         new_deletions.forEach(function(lineNo) {
