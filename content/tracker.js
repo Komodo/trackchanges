@@ -12,12 +12,12 @@ var log = require("ko/logging").getLogger("CT::tracker.js");
 //log.setLevel(ko.logging.LOG_INFO);
 
 exports.ChangeTracker = function ChangeTracker(view) {
-    this.enabled = view.prefs.getBoolean('enableTrackChanges', true);
+    this.enabled = view.prefs.getBoolean('trackchanges_enabled', true);
     this.view = view;
     this._timeoutId = null;
     // Watch for view preference changes.
     this.viewPrefObserverService = view.prefs.prefObserverService;
-    this.viewPrefObserverService.addObserver(this, 'enableTrackChanges', false);
+    this.viewPrefObserverService.addObserver(this, 'trackchanges_enabled', false);
     // Bind common event handlers.
     this.onBlurHandlerBound = this.onBlurHandler.bind(this);
     this.escapeHandlerBound = this.escapeHandler.bind(this);
@@ -40,7 +40,7 @@ exports.ChangeTracker.prototype.QueryInterface = function (iid) {
 
 exports.ChangeTracker.prototype.close = function() {
     this.changeTrackingOff(true /*viewIsClosing*/);
-    this.viewPrefObserverService.removeObserver(this, 'enableTrackChanges', false);
+    this.viewPrefObserverService.removeObserver(this, 'trackchanges_enabled', false);
     this.viewPrefObserverService = null;
     this.view = null;
 };
@@ -113,11 +113,11 @@ exports.ChangeTracker.prototype.escapeHandler = function(event) {
 };
 
 exports.ChangeTracker.prototype.observe = function(doc, topic, data) {
-    if (topic == 'enableTrackChanges') {
-        this.enabled = this.view.prefs.getLongPref(topic);
+    if (topic == 'trackchanges_enabled') {
+        this.enabled = this.view.prefs.getLong(topic, true);
         if (this.enabled) {
             this.changeTrackingOn();
-            //@@!!! show updates immediately.
+            // Show updates immediately.
             this.update();
         } else {
             this.changeTrackingOff();
