@@ -9,10 +9,10 @@ const MARGIN_TEXT_LENGTH = 1;
 // TODO: Move const for margin number to core editor file.
 const MARGIN_CHANGEMARGIN = 3;
 
-const CHANGES_NONE = Ci.koIDocument.CHANGES_NONE;
-const CHANGES_INSERT = Ci.koIDocument.CHANGES_INSERT;
-const CHANGES_DELETE = Ci.koIDocument.CHANGES_DELETE;
-const CHANGES_REPLACE = Ci.koIDocument.CHANGES_REPLACE;
+const CHANGES_NONE = Ci.koIChangeTracker.CHANGES_NONE;
+const CHANGES_INSERT = Ci.koIChangeTracker.CHANGES_INSERT;
+const CHANGES_DELETE = Ci.koIChangeTracker.CHANGES_DELETE;
+const CHANGES_REPLACE = Ci.koIChangeTracker.CHANGES_REPLACE;
 
 // Used for checking the marker position cache.
 const CACHE_VALID = 0;
