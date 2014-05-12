@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
+  <!ENTITY % trackchanges_fonts_DTD SYSTEM "chrome://trackchanges/locale/trackchanges.dtd">
+  %trackchanges_fonts_DTD;
+]>
+
+<overlay id="trackchanges_fontprefs_overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <menupopup id="extracolors.menupopup">
+        <menuitem id="changeInsertion"
+                  label="&showChanges_ChangeInsertionColor.label;"
+                  value="11"
+                  oncommand="updateSchemeColor('changeMarginInserted')"/>
+        <menuitem id="changeDeletion"
+                  label="&showChanges_ChangeInsertionDeletion.label;"
+                  value="12"
+                  oncommand="updateSchemeColor('changeMarginDeleted')"/>
+    </menupopup>
+
+</overlay>

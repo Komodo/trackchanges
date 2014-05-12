@@ -45,7 +45,7 @@ this.init = function() {
     // And because this method might have been called after documents were
     // loaded, we need to set up the changeTracker for existing ones.
     ko.views.manager.getAllViews('editor').forEach(function(view) {
-        if (!('showChangesInMargin' in view)) {
+        if (!('changeTracker' in view)) {
             //log.debug(">> force an open view for " + view.koDoc.displayPath);
             this.onViewOpenedHandler({originalTarget: view});
         }
@@ -85,7 +85,7 @@ this.onViewOpenedHandler = function(event) {
         return;
     }
 
-    view.enabled = view.prefs.getLongPref("showChangesInMargin");
+    view.enabled = view.prefs.getLong("trackchanges_enabled", true);
 
     var tracker = require("trackchanges/tracker");
     view.changeTracker = new tracker.ChangeTracker(view);
@@ -161,6 +161,6 @@ this.onMarginGetTooltipText = function(event) {
 window.addEventListener("komodo-ui-started", ko.changeTracker.init.bind(ko.changeTracker), false);
 
 // TODO: Listen for pref changes and update accordingly.
-//  'showChangesInMargin',
+//  'trackchanges_enabled',
 //  'editor-scheme',
 //  'scheme-changed',

@@ -3,5 +3,7 @@ skin trackchanges classic/1.0 jar:trackchanges.jar!/skin/
 locale trackchanges en-US jar:trackchanges.jar!/locale/en-US/
 
 overlay chrome://komodo/content/komodo.xul chrome://trackchanges/content/overlay.xul
+overlay chrome://komodo/content/pref/pref-editsmart.xul chrome://trackchanges/content/pref-editsmart-overlay.xul
+overlay chrome://komodo/content/pref/pref-alllangfonts.xul chrome://trackchanges/content/pref-fonts-overlay.xul
 
 category require-path trackchanges chrome://trackchanges/content/

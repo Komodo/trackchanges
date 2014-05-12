@@ -1,2 +1,6 @@
 <!ENTITY retractThisChange.label "Retract This Change">
+<!ENTITY showChanges.label "Track Changes">
+<!ENTITY showChangesEnableTracking.checkbox.label "Enable Change Tracking in the editor margin">
+<!ENTITY showChanges_ChangeInsertionColor.label "Change: Insertions">
+<!ENTITY showChanges_ChangeInsertionDeletion.label "Change: Deletions">
 <!ENTITY thisMarkersChanges.label "This marker's changes">

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
+  <!ENTITY % trackchangesDTD SYSTEM "chrome://trackchanges/locale/trackchanges.dtd">
+  %trackchangesDTD;
+]>
+
+<overlay id="trackchanges_prefs_overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <vbox id="editsmart-prefs-vbox">
+        <groupbox id="trackchanges_groupbox"
+                  insertbefore="highlightvariable_groupbox">
+            <caption label="&showChanges.label;"/>
+            <checkbox id="trackchanges_enabled"
+                      label="&showChangesEnableTracking.checkbox.label;"
+                      pref="true"
+                      preftype="boolean"
+                      prefdefault="true"
+                      />
+        </groupbox>
+    </vbox>
+
+</overlay>
