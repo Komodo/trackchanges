@@ -85,7 +85,7 @@ this.onViewOpenedHandler = function(event) {
         return;
     }
 
-    view.enabled = view.prefs.getLong("trackchanges_enabled", true);
+    view.changeTracker.enabled = view.prefs.getLong("trackchanges_enabled", true);
 
     var tracker = require("trackchanges/tracker");
     view.changeTracker = new tracker.ChangeTracker(view);
