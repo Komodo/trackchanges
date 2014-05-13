@@ -85,14 +85,14 @@ this.onViewOpenedHandler = function(event) {
         return;
     }
 
-    view.changeTracker.enabled = view.prefs.getLong("trackchanges_enabled", true);
-
     var tracker = require("trackchanges/tracker");
     view.changeTracker = new tracker.ChangeTracker(view);
 
-    // TODO: Delay initialization for batch files.
-    //if (!ko.views.manager.batchMode) {
-    view.changeTracker.updateWithDelay();
+    if (view.changeTracker.enabled) {
+        // TODO: Delay initialization for batch files.
+        //if (!ko.views.manager.batchMode) {
+        view.changeTracker.updateWithDelay();
+    }
 };
 
 this.onViewClosedHandler = function(event) {
