@@ -18,8 +18,7 @@ if (typeof(ko.changeTracker) === 'undefined') {
 var log = require("ko/logging").getLogger("CT::trackchanges.js");
 //log.setLevel(ko.logging.LOG_INFO);
 
-// TODO: Move const for margin number to core editor file.
-const MARGIN_CHANGEMARGIN = 3;
+const MARGIN_CHANGEMARGIN = Ci.ISciMoz.MARGIN_TRACKING;
 
 /**
  * Responsible for creating and deleting ChangeTracker objects, and associating

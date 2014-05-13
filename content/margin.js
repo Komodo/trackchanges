@@ -6,8 +6,7 @@ const { Ci } = require("chrome");
 const color = require("ko/color");
 
 const MARGIN_TEXT_LENGTH = 1;
-// TODO: Move const for margin number to core editor file.
-const MARGIN_CHANGEMARGIN = 3;
+const MARGIN_CHANGEMARGIN = Ci.ISciMoz.MARGIN_TRACKING;
 
 const CHANGES_NONE = Ci.koIChangeTracker.CHANGES_NONE;
 const CHANGES_INSERT = Ci.koIChangeTracker.CHANGES_INSERT;
