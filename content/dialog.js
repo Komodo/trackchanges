@@ -1,4 +1,4 @@
-const { CC, Ci } = require("chrome");
+const { Cc, Ci } = require("chrome");
 
 var log = require("ko/logging").getLogger("CT::dialog.js");
 //log.setLevel(ko.logging.LOG_INFO);
