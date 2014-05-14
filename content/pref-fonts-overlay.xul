@@ -9,15 +9,15 @@
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
     <menupopup id="extracolors.menupopup">
-        <menuitem id="trackchanges_insertion"
+        <menuitem id="changeMarginInserted"
                   label="&marginInsertionColor.menuitem.label;"
                   value="11"
                   oncommand="updateSchemeColor('changeMarginInserted')"/>
-        <menuitem id="trackchanges_deletion"
+        <menuitem id="changeMarginDeleted"
                   label="&marginDeletionColor.menuitem.label;"
                   value="12"
                   oncommand="updateSchemeColor('changeMarginDeleted')"/>
-        <menuitem id="trackchanges_replacement"
+        <menuitem id="changeMarginReplaced"
                   label="&marginReplacementColor.menuitem.label;"
                   value="13"
                   oncommand="updateSchemeColor('changeMarginReplaced')"/>
