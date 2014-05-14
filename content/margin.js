@@ -7,6 +7,17 @@ const color = require("ko/color");
 
 const MARGIN_TEXT_LENGTH = 1;
 const MARGIN_CHANGEMARGIN = Ci.ISciMoz.MARGIN_TRACKING;
+const MARGIN_CHANGEMARGIN_WIDTH = 6; // pixels
+
+// Scintilla margin marker numbers - should not collide with any other margins.
+const MARKER_INSERTION = 22;
+const MARKER_DELETION = 23;
+const MARKER_REPLACEMENT = 24;
+
+const MARKER_MASK = (1 << MARKER_INSERTION) | (1 << MARKER_DELETION) | (1 << MARKER_REPLACEMENT)
+const MARKER_INSERTION_MASK = (1 << MARKER_INSERTION);
+const MARKER_DELETION_MASK = (1 << MARKER_DELETION);
+const MARKER_REPLACEMENT_MASK = (1 << MARKER_REPLACEMENT);
 
 const CHANGES_NONE = Ci.koIChangeTracker.CHANGES_NONE;
 const CHANGES_INSERT = Ci.koIChangeTracker.CHANGES_INSERT;
@@ -33,156 +44,50 @@ exports.MarginController = function MarginController(view) {
 exports.MarginController.prototype = {
     constructor: this.MarginController,
 
-    _fix_rgb_color: function _fix_rgb_color(cssColor) {
-        if (cssColor[0] == "#") {
-            if (cssColor.length == 4) {
-                return parseInt(cssColor[1] + cssColor[1] +
-                                cssColor[2] + cssColor[2] +
-                                cssColor[3] + cssColor[3], 16);
-            }
-            // Strip off the '#' and parse as is.
-            // Most of the time there will be 6 hexdigits.
-            return parseInt(cssColor.substring(1), 16);
-        }
-        return cssColor;
-    },
-
-    getColorAsHexRGB: function(colorAction) {
-        return this[colorAction + "RGBColor"];
-    },
-
-    _initMarkerStyles: function(markerStyleSteps) {
-        const styleOffset = 255;
-        const marginCharacterSize = 6;
+    _initMarkerStyles: function() {
         const scimoz = this.view.scimoz;
-        scimoz.marginStyleOffset = styleOffset;
 
         var insertColor, deleteColor, replaceColor;
-        var bgr_string_to_rgb_array = function(cssColor) {
-            var red, green, blue, x;
-            if (typeof(cssColor) == "string") {
-                if (cssColor[0] == "#") {
-                    cssColor = cssColor.substring(1);
-                }
-                if (cssColor.length == 3) {
-                    x = parseInt(cssColor[0], 16);
-                    blue = x << 8 + x;
-                    x = parseInt(cssColor[1], 16);
-                    green = x << 8 + x;
-                    x = parseInt(cssColor[2], 16);
-                    red = x << 8 + x;
-                } else {
-                    blue = parseInt(cssColor.substring(0, 2), 16);
-                    green = parseInt(cssColor.substring(2, 4), 16);
-                    red = parseInt(cssColor.substring(4, 6), 16);
-                }
-            } else {
-                blue = (cssColor & 0xff0000) >> 16;
-                green = (cssColor & 0x00ff00) >> 8;
-                red = (cssColor & 0x0000ff);
-            }
-            return [red, green, blue];
-        };
-        var num_to_hex2 = function(v) {
-            var s = v.toString(16);
-            if (s.length == 2) {
-                return s;
-            }
-            return "0" + s;
-        };
-        var bgr_to_desaturated_rgb_for_css = function(bgrColor) {
-            var [red, green, blue] = bgr_string_to_rgb_array(bgrColor);
-            // And now reduce the saturation.
-            const [H, S, V] = color.rgb2hsv(red, green, blue);
-            // Reduce the intensity of the color by 30%
-            const S1 = S * 0.7;
-            const [R2, G2, B2] = color.hsv2rgb(H, S1, V);
-            return "#" + num_to_hex2(R2) + num_to_hex2(G2) + num_to_hex2(B2);
-        };
+
+        // Get the track changes colors directly from the color scheme.
         try {
-            insertColor = this._fix_rgb_color(this.view.scheme.getColor("changeMarginInserted"));
+            insertColor = this.view.scheme.getColor("changeMarginInserted");
         } catch(ex) {
             log.exception(ex, "couldn't get the insert-color");
             insertColor = 0xa3dca6; // BGR for a muted green
         }
         try {
-            deleteColor = this._fix_rgb_color(this.view.scheme.getColor("changeMarginDeleted"));
+            deleteColor = this.view.scheme.getColor("changeMarginDeleted");
         } catch(ex) {
             log.exception(ex, "couldn't get the delete-color");
             deleteColor = 0x5457e7; // BGR for a muted red
         }
         try {
-            replaceColor = this._fix_rgb_color(this.view.scheme.getColor("changeMarginReplaced"));
+            replaceColor = this.view.scheme.getColor("changeMarginReplaced");
         } catch(e) {
             log.exception(ex, "couldn't get the change-color");
             replaceColor = 0xe8d362; // BGR for a muted blue
         }
-        try {
-            this.insertRGBColor = bgr_to_desaturated_rgb_for_css(insertColor);
-            this.deleteRGBColor = bgr_to_desaturated_rgb_for_css(deleteColor);
-            this.replaceRGBColor = bgr_to_desaturated_rgb_for_css(replaceColor);
-        } catch(e) {
-            log.exception(e, "Failed to convert a color from bgr to rgb");
-        }
 
-        /* Don't use 0 as a style number. marginGetStyles and marginSetStyles
-        uses byte-strings of concatenated style numbers, but the implementation
-        can't handle null bytes */
-        this.clearStyleNum = 1;
+        // Define scintilla markers.
+        scimoz.markerDefine(MARKER_INSERTION, scimoz.SC_MARK_LEFTRECT)
+        scimoz.markerSetBack(MARKER_INSERTION, insertColor);
 
-        const defaultBackColor = scimoz.styleGetBack(scimoz.STYLE_LINENUMBER);
-        scimoz.styleSetBack(this.clearStyleNum + styleOffset, defaultBackColor);
-        scimoz.styleSetSize(this.clearStyleNum + styleOffset, marginCharacterSize);
+        scimoz.markerDefine(MARKER_DELETION, scimoz.SC_MARK_LEFTRECT)
+        scimoz.markerSetBack(MARKER_DELETION, deleteColor);
 
-        const insertStyleNum = this.clearStyleNum + 1;
-        const insertBackColor = insertColor;
-        scimoz.styleSetBack(insertStyleNum + styleOffset, insertBackColor);
-        scimoz.styleSetSize(insertStyleNum + styleOffset, marginCharacterSize);
-
-        const deleteStyleNum = this.clearStyleNum + 2;
-        const deleteBackColor = deleteColor;
-        scimoz.styleSetBack(deleteStyleNum + styleOffset, deleteBackColor);
-        scimoz.styleSetSize(deleteStyleNum + styleOffset, marginCharacterSize);
-
-        const replaceStyleNum = this.clearStyleNum + 3;
-        const replaceBackColor = replaceColor;
-        scimoz.styleSetBack(replaceStyleNum + styleOffset, replaceBackColor);
-        scimoz.styleSetSize(replaceStyleNum + styleOffset, marginCharacterSize);
-
-        // Create string variants, as the marginSetText takes a string.
-        this.clearStyleString = String.fromCharCode(this.clearStyleNum);
-        this.insertStyleString = String.fromCharCode(insertStyleNum);
-        this.deleteStyleString = String.fromCharCode(deleteStyleNum);
-        this.replaceStyleString = String.fromCharCode(replaceStyleNum);
+        scimoz.markerDefine(MARKER_REPLACEMENT, scimoz.SC_MARK_LEFTRECT)
+        scimoz.markerSetBack(MARKER_REPLACEMENT, replaceColor);
     },
 
-    _initMargins: function() {
+    _initMargin: function() {
         var scimoz = this.view.scimoz;
-        scimoz.setMarginTypeN(MARGIN_CHANGEMARGIN,
-                              scimoz.SC_MARGIN_RTEXT); // right-justified text
-        this.marginWidth = scimoz.textWidth(this.clearStyleNum, " "); // 1 space
-        // Note: If we try to set the margin Width to a smaller value,
-        // Scintilla will display the rest of the space in the previous margin,
-        // and clicking on that will trigger the previous margin's handler
-        scimoz.setMarginWidthN(MARGIN_CHANGEMARGIN, this.marginWidth);
+        scimoz.setMarginTypeN(MARGIN_CHANGEMARGIN, scimoz.SC_MARGIN_SYMBOL);
+        // If someone else is using the margin, respect their mask settings.
+        var existing_markermask = scimoz.getMarginMaskN(MARGIN_CHANGEMARGIN);
+        scimoz.setMarginMaskN(MARGIN_CHANGEMARGIN, existing_markermask | MARKER_MASK);
+        scimoz.setMarginWidthN(MARGIN_CHANGEMARGIN, MARGIN_CHANGEMARGIN_WIDTH);
         scimoz.setMarginSensitiveN(MARGIN_CHANGEMARGIN, true);
-    },
-
-    _isMarkerSetOnLine: function(scimoz, styleString, lineNo) {
-        var resultObj = {};
-        scimoz.marginGetStyles(lineNo, resultObj);
-        if (resultObj.value != styleString) {
-            return false;
-        }
-        return true;
-    },
-
-    _specificMarkerSet: function(line, styleString, scimoz) {
-        if (!scimoz) {
-            scimoz = this.view.scimoz;
-        }
-        scimoz.marginSetText(line, " ");
-        scimoz.marginSetStyles(line, styleString);
     },
 
 
@@ -195,7 +100,7 @@ exports.MarginController.prototype = {
     },
 
     showMargin: function() {
-        this.view.scimoz.setMarginWidthN(MARGIN_CHANGEMARGIN, this.marginWidth);
+        this.view.scimoz.setMarginWidthN(MARGIN_CHANGEMARGIN, MARGIN_CHANGEMARGIN_WIDTH);
     },
 
     hideMargin: function() {
@@ -203,32 +108,32 @@ exports.MarginController.prototype = {
     },
 
     refreshMarginProperies: function refreshMarginProperies() {
-        this._initMarkerStyles(10); // maximum is 128
-        this._initMargins();
+        this._initMarkerStyles();
+        this._initMargin();
     },
 
     clear: function() {
         // We can't use the held deletion/insertion lists because the line numbers
         // could have changed.
         const scimoz = this.view.scimoz;
-        const lim = scimoz.lineCount;
-        for (let lineNo = 0; lineNo < lim; lineNo++) {
-            scimoz.marginSetStyles(lineNo, this.clearStyleString);
-        }
+        scimoz.markerDeleteAll(MARKER_INSERTION);
+        scimoz.markerDeleteAll(MARKER_DELETION);
+        scimoz.markerDeleteAll(MARKER_REPLACEMENT);
         this.previous_deletions = new Set();
         this.previous_insertions = new Set();
         this.previous_replacements = new Set();
     },
 
-    clearLineNos: function(lineNos, styleString) {
-        // We can't use the held deletion/insertion lists because the line numbers
-        // could have changed.
+    clearLineNos: function(lineNos, markerNum) {
+        // We can't use the cahced deletion/insertion lists because the line
+        // numbers may have changed since the cache was updated.
         const scimoz = this.view.scimoz;
+        const markerMask = (1 << markerNum);
         for (let lineNo of lineNos) {
-            if (!this._isMarkerSetOnLine(scimoz, styleString, lineNo)) {
+            if (!scimoz.markerGet(lineNo) & markerMask) {
                 return CACHE_OUT_OF_DATE;
             }
-            scimoz.marginSetStyles(lineNo, this.clearStyleString);
+            scimoz.markerDelete(lineNo, markerNum);
         }
         return CACHE_VALID;
     },
@@ -268,9 +173,9 @@ exports.MarginController.prototype = {
         var expired_insertions = [x for (x of this.previous_insertions) if (!(insertions.has(x)))];
         var expired_replacements = [x for (x of this.previous_replacements) if (!(replacements.has(x)))];
         // Remove the expired entries.
-        if (this.clearLineNos(expired_deletions, this.deleteStyleString) == CACHE_OUT_OF_DATE ||
-            this.clearLineNos(expired_insertions, this.insertStyleString) == CACHE_OUT_OF_DATE ||
-            this.clearLineNos(expired_replacements, this.replaceStyleString) == CACHE_OUT_OF_DATE)
+        if (this.clearLineNos(expired_deletions, MARKER_DELETION) == CACHE_OUT_OF_DATE ||
+            this.clearLineNos(expired_insertions, MARKER_INSERTION) == CACHE_OUT_OF_DATE ||
+            this.clearLineNos(expired_replacements, MARKER_REPLACEMENT) == CACHE_OUT_OF_DATE)
         {
             // Cache is out-of-date, reset all entries.
             log.info("Cache is out of date (deleted positions) - clearing");
@@ -285,13 +190,13 @@ exports.MarginController.prototype = {
         var unchanged_insertions = [x for (x of this.previous_insertions) if ((insertions.has(x)))];
         var unchanged_replacements = [x for (x of this.previous_replacements) if ((replacements.has(x)))];
         if (unchanged_deletions.some(function(lineNo) {
-                return !margin._isMarkerSetOnLine(scimoz, margin.deleteStyleString, lineNo);
+                return !(scimoz.markerGet(lineNo) & MARKER_DELETION_MASK);
             }) ||
             unchanged_insertions.some(function(lineNo) {
-                return !margin._isMarkerSetOnLine(scimoz, margin.insertStyleString, lineNo);
+                return !(scimoz.markerGet(lineNo) & MARKER_INSERTION_MASK);
             }) ||
             unchanged_replacements.some(function(lineNo) {
-                return !margin._isMarkerSetOnLine(scimoz, margin.replaceStyleString, lineNo);
+                return !(scimoz.markerGet(lineNo) & MARKER_REPLACEMENT_MASK);
             }))
         {
             // Cache is out-of-date, reset all entries.
@@ -306,15 +211,15 @@ exports.MarginController.prototype = {
 
         // Add the new deletion positions.
         new_deletions.forEach(function(lineNo) {
-            margin._specificMarkerSet(lineNo, margin.deleteStyleString, scimoz);
+            scimoz.markerAdd(lineNo, MARKER_DELETION);
         });
         // Add the new insertion positions.
         new_insertions.forEach(function(lineNo) {
-            margin._specificMarkerSet(lineNo, margin.insertStyleString, scimoz);
+            scimoz.markerAdd(lineNo, MARKER_INSERTION);
         });
         // Add the new replacement positions.
         new_replacements.forEach(function(lineNo) {
-            margin._specificMarkerSet(lineNo, margin.replaceStyleString, scimoz);
+            scimoz.markerAdd(lineNo, MARKER_REPLACEMENT);
         });
 
         // And store them for the next time.
