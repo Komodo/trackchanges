@@ -1,4 +1,5 @@
 const { Cc, Ci } = require("chrome");
+const color = require("ko/color");
 
 var log = require("ko/logging").getLogger("CT::dialog.js");
 //log.setLevel(ko.logging.LOG_INFO);
@@ -37,8 +38,9 @@ exports.showChanges = function(tracker, lineNo) {
     const missingNewline = "<span class='comment'>\\ No newline at end of file</span>";
     var noNewlineAtEndOfOldLines  = !oldEndsWithEOL ? [missingNewline] : [];
     var noNewlineAtEndOfNewLines  = !newEndsWithEOL ? [missingNewline] : [];
-    var oldColor = tracker.margin.getColorAsHexRGB('delete');
-    var newColor = tracker.margin.getColorAsHexRGB('insert');
+    // Convert Scintilla colors to hex RGB colors.
+    var oldColor = color.longToHex(color.BGRToRGB(tracker.margin.deleteColor));
+    var newColor = color.longToHex(color.BGRToRGB(tracker.margin.insertColor));
 
     var escapeLines = function(textLines) {
         return textLines.map(function(s) {

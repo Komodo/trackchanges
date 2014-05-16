@@ -33,6 +33,10 @@ var log = require("ko/logging").getLogger("CT::margin.js");
 
 exports.MarginController = function MarginController(view) {
     this.view = view;
+    // Default colors - in BGR format.
+    this.insertColor = 0xa3dca6; // BGR for a muted green
+    this.deleteColor = 0x5457e7; // BGR for a muted red
+    this.replaceColor = 0xe8d362; // BGR for a muted blue
     // Remember the margin change positions.
     this.previous_deletions = new Set();
     this.previous_insertions = new Set();
@@ -47,38 +51,33 @@ exports.MarginController.prototype = {
     _initMarkerStyles: function() {
         const scimoz = this.view.scimoz;
 
-        var insertColor, deleteColor, replaceColor;
-
         // Get the track changes colors directly from the color scheme.
         // Note that schemes use BGR hex color values (urgh).
         try {
-            insertColor = color.hexToLong(this.view.scheme.getColor("changeMarginInserted"));
+            this.insertColor = color.hexToLong(this.view.scheme.getColor("changeMarginInserted"));
         } catch(ex) {
             log.exception(ex, "couldn't get the insert-color");
-            insertColor = 0xa3dca6; // BGR for a muted green
         }
         try {
-            deleteColor = color.hexToLong(this.view.scheme.getColor("changeMarginDeleted"));
+            this.deleteColor = color.hexToLong(this.view.scheme.getColor("changeMarginDeleted"));
         } catch(ex) {
             log.exception(ex, "couldn't get the delete-color");
-            deleteColor = 0x5457e7; // BGR for a muted red
         }
         try {
-            replaceColor = color.hexToLong(this.view.scheme.getColor("changeMarginReplaced"));
+            this.replaceColor = color.hexToLong(this.view.scheme.getColor("changeMarginReplaced"));
         } catch(e) {
             log.exception(ex, "couldn't get the change-color");
-            replaceColor = 0xe8d362; // BGR for a muted blue
         }
 
         // Define scintilla markers.
         scimoz.markerDefine(MARKER_INSERTION, scimoz.SC_MARK_LEFTRECT)
-        scimoz.markerSetBack(MARKER_INSERTION, insertColor);
+        scimoz.markerSetBack(MARKER_INSERTION, this.insertColor);
 
         scimoz.markerDefine(MARKER_DELETION, scimoz.SC_MARK_LEFTRECT)
-        scimoz.markerSetBack(MARKER_DELETION, deleteColor);
+        scimoz.markerSetBack(MARKER_DELETION, this.deleteColor);
 
         scimoz.markerDefine(MARKER_REPLACEMENT, scimoz.SC_MARK_LEFTRECT)
-        scimoz.markerSetBack(MARKER_REPLACEMENT, replaceColor);
+        scimoz.markerSetBack(MARKER_REPLACEMENT, this.replaceColor);
     },
 
     _initMargin: function() {
