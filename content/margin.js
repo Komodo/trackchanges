@@ -50,20 +50,21 @@ exports.MarginController.prototype = {
         var insertColor, deleteColor, replaceColor;
 
         // Get the track changes colors directly from the color scheme.
+        // Note that schemes use BGR hex color values (urgh).
         try {
-            insertColor = color.hexToLong(color.BGR(this.view.scheme.getColor("changeMarginInserted")));
+            insertColor = color.hexToLong(this.view.scheme.getColor("changeMarginInserted"));
         } catch(ex) {
             log.exception(ex, "couldn't get the insert-color");
             insertColor = 0xa3dca6; // BGR for a muted green
         }
         try {
-            deleteColor = color.hexToLong(color.BGR(this.view.scheme.getColor("changeMarginDeleted")));
+            deleteColor = color.hexToLong(this.view.scheme.getColor("changeMarginDeleted"));
         } catch(ex) {
             log.exception(ex, "couldn't get the delete-color");
             deleteColor = 0x5457e7; // BGR for a muted red
         }
         try {
-            replaceColor = color.hexToLong(color.BGR(this.view.scheme.getColor("changeMarginReplaced")));
+            replaceColor = color.hexToLong(this.view.scheme.getColor("changeMarginReplaced"));
         } catch(e) {
             log.exception(ex, "couldn't get the change-color");
             replaceColor = 0xe8d362; // BGR for a muted blue
