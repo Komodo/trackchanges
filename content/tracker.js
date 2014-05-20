@@ -18,9 +18,6 @@ exports.ChangeTracker = function ChangeTracker(view) {
     // Watch for view preference changes.
     this.viewPrefObserverService = view.prefs.prefObserverService;
     this.viewPrefObserverService.addObserver(this, 'trackchanges_enabled', false);
-    // Bind common event handlers.
-    this.onBlurHandlerBound = this.onBlurHandler.bind(this);
-    this.escapeHandlerBound = this.escapeHandler.bind(this);
 
     if (!this.enabled) {
         return;
@@ -60,21 +57,11 @@ exports.ChangeTracker.prototype.getTooltipText = function(lineNo) {
     return null;
 };
 
-exports.ChangeTracker.prototype.onBlurHandler = function(event) {
-    // Have we shown the panel and moved to a different document?
-    let panel = document.getElementById('changeTracker_panel');
-    if (panel.state != "closed" && panel.view != ko.views.manager.currentView) {
-        panel.hidePopup();
-        this.onPanelHide();
-    }
-};
-
 exports.ChangeTracker.prototype.changeTrackingOn = function() {
     // Create the margin.
     var margin = require("./margin");
     this.margin = new margin.MarginController(this.view);
     this.margin.showMargin();
-    this.view.addEventListener("blur", this.onBlurHandlerBound, false);
 
     // Create the xpcom instance, to keep track of underlying file changes.
     const {Cc, Ci} = require("chrome");
@@ -89,27 +76,6 @@ exports.ChangeTracker.prototype.changeTrackingOff = function(viewIsClosing) {
     }
     this.margin.close();
     this.margin = null;
-    this.view.removeEventListener("blur", this.onBlurHandlerBound, false);
-};
-
-exports.ChangeTracker.prototype.onPanelShow = function() {
-    this.view.addEventListener("keypress", this.escapeHandlerBound, false);
-};
-
-exports.ChangeTracker.prototype.onPanelHide = function() {
-    this.view.removeEventListener("keypress", this.escapeHandlerBound, false);
-};
-
-exports.ChangeTracker.prototype.escapeHandler = function(event) {
-    var panel = document.getElementById('changeTracker_panel');
-    // If the panel's visible should we close it on any keystroke,
-    // when the target is the view?
-    if (event.keyCode == event.DOM_VK_ESCAPE || panel.state == "closed") {
-        panel.hidePopup();
-        this.onPanelHide();
-        event.stopPropagation();
-        event.preventDefault();
-    }
 };
 
 exports.ChangeTracker.prototype.observe = function(doc, topic, data) {

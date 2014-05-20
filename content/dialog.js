@@ -149,12 +149,18 @@ exports.showChanges = function(tracker, lineNo) {
 };
 
 exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
+    var view = tracker.view;
     var panel = document.getElementById('changeTracker_panel');
     panel.hidePopup();
     var iframe = panel.getElementsByTagName("iframe")[0];
     var undoButton = document.getElementById('changeTracker_undo');
     iframe.setAttribute("src", htmlFile.URI);
-    var [x, y] = tracker.view._last_mousemove_xy;
+    var [x, y] = view._last_mousemove_xy;
+
+    // Event handlers.
+    var panelBlurHandler = function(event) {
+        panel.hidePopup();
+    };
     var escapeHandler = function(event) {
         if (event.keyCode == event.DOM_VK_ESCAPE) {
             panel.hidePopup();
@@ -164,30 +170,26 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
     };
     var iframeLoadedFunc = function(event) {
         try {
-            panel.openPopup(tracker.view, "after_pointer", x, y, false, false);
+            panel.openPopup(view, "after_pointer", x, y, false, false);
             panel.sizeTo(600, 400);
             fileSvc.deleteTempFile(htmlFile.path, true);
             undoButton.addEventListener("command", undoTextFunc, false);
-            tracker.onPanelShow();
         } catch(ex) {
             log.exception(ex, "problem in iframeLoadedFunc\n");
         }
-    }.bind(this);
+    }
     var panelHiddenFunc = function(event) {
         undoButton.removeEventListener("command", undoTextFunc, false);
         iframe.removeEventListener("load", iframeLoadedFunc, true);
         panel.removeEventListener("popuphidden", panelHiddenFunc, false);
         panel.removeEventListener("keypress", escapeHandler, false);
         panel.removeEventListener("blur", panelBlurHandler, false);
-        tracker.onPanelHide();
+        view.removeEventListener("focus", panelBlurHandler, false);
     };
-    var panelBlurHandler = function(event) {
-        panel.hidePopup();
-    };
+
     iframe.addEventListener("load", iframeLoadedFunc, true);
     panel.addEventListener("popuphidden", panelHiddenFunc, true);
     panel.addEventListener("keypress", escapeHandler, false);
     panel.addEventListener("blur", panelBlurHandler, false);
-    panel.view = tracker.view;
+    view.addEventListener("focus", panelBlurHandler, false);
 };
-
