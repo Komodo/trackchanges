@@ -287,7 +287,7 @@ class DocumentChangeTracker(object):
             self.getDiskChangesAsync(handler, koDoc, koFile)
 
     @components.ProxyToMainThread
-    def getOldAndNewLines(self, lineno, change_mask):
+    def getOldAndNewLines(self, lineno, change_type):
         old_ends_with_eol = new_ends_with_eol = True
         #XXX: Check old_ends_with_eol and new_ends_with_eol
         old_lines = []
@@ -297,23 +297,20 @@ class DocumentChangeTracker(object):
         retval = [old_ends_with_eol, new_ends_with_eol,
                   old_line_range, new_line_range,
                   old_lines, new_lines]
-        DEL_MASK = 1 << self.CHANGES_DELETE
-        INS_MASK = 1 << self.CHANGES_INSERT
-        REP_MASK = 1 << self.CHANGES_REPLACE
-        if change_mask & DEL_MASK:
+        if change_type == self.CHANGES_DELETE:
             first_lineno = lineno
         else:
             first_lineno = self.first_interesting_line[lineno]
         old_line_range = None
-        if change_mask & (DEL_MASK|REP_MASK):
-            if change_mask & REP_MASK:
+        if change_type != self.CHANGES_INSERT:
+            if change_type == self.CHANGES_REPLACE:
                 lines_to_use = self.changed_text_line_range
             else:
                 lines_to_use = self.deleted_text_line_range
             if first_lineno not in lines_to_use:
                 log.warn("Can't find an entry for line %d in self.%s",
                          first_lineno,
-                         ((change_mask & REP_MASK) and "changed_text_line_range"
+                         ((change_type == self.CHANGES_REPLACE) and "changed_text_line_range"
                           or "deleted_text_line_range"))
                 return retval
             old_line_range = lines_to_use[first_lineno]
@@ -324,19 +321,19 @@ class DocumentChangeTracker(object):
                 # Failed to get those lines
                 return retval
         # end if
-        if change_mask & (INS_MASK|REP_MASK):
+        if change_type != self.CHANGES_DELETE:
             if  lineno not in self.first_interesting_line:
                 log.warn("Can't find an entry for line %d in self.first_interesting_line (%r)",
                          lineno, self.first_interesting_line.keys())
                 return retval
-            if change_mask & REP_MASK:
+            if change_type == self.CHANGES_REPLACE:
                 lines_to_use = self.last_modifications
             else:
                 lines_to_use = self.last_insertions
             if first_lineno not in lines_to_use:
                 log.warn("Can't find an entry for line %d in self.%s (%s)",
                          first_lineno,
-                         ((change_mask & REP_MASK) and "changed_text_line_range"
+                         ((change_type == self.CHANGES_REPLACE) and "changed_text_line_range"
                           or "last_insertions"),
                          lines_to_use.keys())
                 return retval

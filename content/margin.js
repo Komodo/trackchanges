@@ -33,14 +33,10 @@ var log = require("ko/logging").getLogger("CT::margin.js");
 
 exports.MarginController = function MarginController(view) {
     this.view = view;
-    // Default colors - in BGR format.
+    // Default scintilla marker colors - in BGR format.
     this.insertColor = 0xa3dca6; // BGR for a muted green
     this.deleteColor = 0x5457e7; // BGR for a muted red
     this.replaceColor = 0xe8d362; // BGR for a muted blue
-    // Remember the margin change positions.
-    this.previous_deletions = new Set();
-    this.previous_insertions = new Set();
-    this.previous_replacements = new Set();
     // Setup the margin styling.
     this.refreshMarginProperies();
 };
@@ -52,19 +48,19 @@ exports.MarginController.prototype = {
         const scimoz = this.view.scimoz;
 
         // Get the track changes colors directly from the color scheme.
-        // Note that schemes use BGR hex color values (urgh).
+        // Note that scintilla uses BGR color values (urgh).
         try {
-            this.insertColor = color.hexToLong(this.view.scheme.getColor("changeMarginInserted"));
+            this.insertColor = this.view.scheme.getScintillaColor("changeMarginInserted");
         } catch(ex) {
             log.exception(ex, "couldn't get the insert-color");
         }
         try {
-            this.deleteColor = color.hexToLong(this.view.scheme.getColor("changeMarginDeleted"));
+            this.deleteColor = this.view.scheme.getScintillaColor("changeMarginDeleted");
         } catch(ex) {
             log.exception(ex, "couldn't get the delete-color");
         }
         try {
-            this.replaceColor = color.hexToLong(this.view.scheme.getColor("changeMarginReplaced"));
+            this.replaceColor = this.view.scheme.getScintillaColor("changeMarginReplaced");
         } catch(e) {
             log.exception(ex, "couldn't get the change-color");
         }
@@ -112,120 +108,74 @@ exports.MarginController.prototype = {
         this._initMargin();
     },
 
-    clear: function() {
+    clear: function(scimoz) {
         // We can't use the held deletion/insertion lists because the line numbers
         // could have changed.
-        const scimoz = this.view.scimoz;
+        if (!scimoz) {
+            scimoz = this.view.scimoz;
+        }
         scimoz.markerDeleteAll(MARKER_INSERTION);
         scimoz.markerDeleteAll(MARKER_DELETION);
         scimoz.markerDeleteAll(MARKER_REPLACEMENT);
-        this.previous_deletions = new Set();
-        this.previous_insertions = new Set();
-        this.previous_replacements = new Set();
     },
 
-    clearLineNos: function(lineNos, markerNum) {
-        // We can't use the cahced deletion/insertion lists because the line
-        // numbers may have changed since the cache was updated.
+    changeTypeAtLine: function(lineNo) {
         const scimoz = this.view.scimoz;
-        const markerMask = (1 << markerNum);
-        for (let lineNo of lineNos) {
-            if (!scimoz.markerGet(lineNo) & markerMask) {
-                return CACHE_OUT_OF_DATE;
-            }
-            scimoz.markerDelete(lineNo, markerNum);
+        const markerMask = scimoz.markerGet(lineNo) & MARKER_MASK;
+        if (!markerMask) {
+            return CHANGES_NONE;
         }
-        return CACHE_VALID;
-    },
-
-    activeMarkerMask: function(lineNo) {
-        if (this.previous_deletions.has(lineNo))
-            return 1 << CHANGES_DELETE;
-        if (this.previous_insertions.has(lineNo))
-            return 1 << CHANGES_INSERT;
-        if (this.previous_replacements.has(lineNo))
-            return 1 << CHANGES_REPLACE;
-        return 0;
+        if (markerMask & MARKER_INSERTION_MASK) {
+            return CHANGES_INSERT;
+        }
+        if (markerMask & MARKER_DELETION_MASK) {
+            return CHANGES_DELETE;
+        }
+        if (markerMask & MARKER_REPLACEMENT_MASK) {
+            return CHANGES_REPLACE;
+        }
+        return CHANGES_NONE;
     },
 
     markChanges: function(deletions, insertion_ranges, replacement_ranges) {
-        var linesFromLineRange = function(range) {
-            var linenos = [];
-            for (var i=0; i < range.length; i += 2) {
-                var endLine = range[i+1];
-                for (var j=range[i]; j < endLine; j++) {
-                    linenos.push(j);
+        var genLinesFromLineRange = function(range) {
+            for (let i=0; i < range.length; i += 2) {
+                let endLine = range[i+1];
+                for (let j=range[i]; j < endLine; j++) {
+                    yield j;
                 }
             }
-            return linenos;
-        }
-
-        // TODO: This caching code is quite complicated - perhaps it's just
-        //       better to just delete all markers and just re-add them.
-
-        // Turn into sets of line numbers.
-        deletions = new Set(deletions);
-        var insertions = new Set(linesFromLineRange(insertion_ranges));
-        var replacements = new Set(linesFromLineRange(replacement_ranges));
-
-        // Determine old margin entries that need removal.
-        var expired_deletions = [x for (x of this.previous_deletions) if (!(deletions.has(x)))];
-        var expired_insertions = [x for (x of this.previous_insertions) if (!(insertions.has(x)))];
-        var expired_replacements = [x for (x of this.previous_replacements) if (!(replacements.has(x)))];
-        // Remove the expired entries.
-        if (this.clearLineNos(expired_deletions, MARKER_DELETION) == CACHE_OUT_OF_DATE ||
-            this.clearLineNos(expired_insertions, MARKER_INSERTION) == CACHE_OUT_OF_DATE ||
-            this.clearLineNos(expired_replacements, MARKER_REPLACEMENT) == CACHE_OUT_OF_DATE)
-        {
-            // Cache is out-of-date, reset all entries.
-            log.info("Cache is out of date (deleted positions) - clearing");
-            this.clear();
         }
 
         const scimoz = this.view.scimoz;
-        var margin = this;
 
-        // Check the cached change positions that are not getting modified in this update.
-        var unchanged_deletions = [x for (x of this.previous_deletions) if ((deletions.has(x)))];
-        var unchanged_insertions = [x for (x of this.previous_insertions) if ((insertions.has(x)))];
-        var unchanged_replacements = [x for (x of this.previous_replacements) if ((replacements.has(x)))];
-        if (unchanged_deletions.some(function(lineNo) {
-                return !(scimoz.markerGet(lineNo) & MARKER_DELETION_MASK);
-            }) ||
-            unchanged_insertions.some(function(lineNo) {
-                return !(scimoz.markerGet(lineNo) & MARKER_INSERTION_MASK);
-            }) ||
-            unchanged_replacements.some(function(lineNo) {
-                return !(scimoz.markerGet(lineNo) & MARKER_REPLACEMENT_MASK);
-            }))
-        {
-            // Cache is out-of-date, reset all entries.
-            log.info("Cache is out of date (unchanged positions) - clearing");
-            this.clear();
+        var updateLineMarkers = function(lineNos, marker) {
+            let marker_mask = (1 << marker);
+            let next = scimoz.markerNext(0, marker_mask);
+            for (let lineNo of lineNos) {
+                while (next >= 0 && next < lineNo) {
+                    // Remove stale markers.
+                    scimoz.markerDelete(next, marker);
+                    next = scimoz.markerNext(next+1, marker_mask);
+                }
+                if (next == lineNo) {
+                    // Already a marker here.
+                    next = scimoz.markerNext(next+1, marker_mask);
+                    continue;
+                }
+                scimoz.markerAdd(lineNo, marker);
+            }
+            // Remove any markers beyond the last updated position.
+            while (next >= 0) {
+                scimoz.markerDelete(next, marker);
+                next = scimoz.markerNext(next+1, marker_mask);
+            }
         }
 
-        // Determine new replacement positions, that don't already exist.
-        var new_deletions = [x for (x of deletions) if (!(this.previous_deletions.has(x)))];
-        var new_insertions = [x for (x of insertions) if (!(this.previous_insertions.has(x)))];
-        var new_replacements = [x for (x of replacements) if (!(this.previous_replacements.has(x)))];
-
-        // Add the new deletion positions.
-        new_deletions.forEach(function(lineNo) {
-            scimoz.markerAdd(lineNo, MARKER_DELETION);
-        });
-        // Add the new insertion positions.
-        new_insertions.forEach(function(lineNo) {
-            scimoz.markerAdd(lineNo, MARKER_INSERTION);
-        });
-        // Add the new replacement positions.
-        new_replacements.forEach(function(lineNo) {
-            scimoz.markerAdd(lineNo, MARKER_REPLACEMENT);
-        });
-
-        // And store them for the next time.
-        this.previous_deletions = deletions;
-        this.previous_insertions = insertions;
-        this.previous_replacements = replacements;
+        // Update the marker positions.
+        updateLineMarkers(deletions, MARKER_DELETION);
+        updateLineMarkers(genLinesFromLineRange(insertion_ranges), MARKER_INSERTION);
+        updateLineMarkers(genLinesFromLineRange(replacement_ranges), MARKER_REPLACEMENT);
     },
 
     __EOF__: null

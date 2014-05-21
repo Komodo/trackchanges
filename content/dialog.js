@@ -7,14 +7,14 @@ var log = require("ko/logging").getLogger("CT::dialog.js");
 var fileSvc = Cc["@activestate.com/koFileService;1"].getService(Ci.koIFileService);
 
 exports.showChanges = function(tracker, lineNo) {
-    var changeMask = tracker.margin.activeMarkerMask(lineNo);
-    if (changeMask === 0) {
+    var changeType = tracker.margin.changeTypeAtLine(lineNo);
+    if (!changeType) {
         return;
     }
 
     var oldLines = {}, newLines = {}, oldLineRange = {}, newLineRange = {};
     var oldEndsWithEOL = {}, newEndsWithEOL = {};
-    tracker.koChangeTracker.getOldAndNewLines(lineNo, changeMask,
+    tracker.koChangeTracker.getOldAndNewLines(lineNo, changeType,
                                               oldEndsWithEOL,
                                               newEndsWithEOL,
                                               {}, oldLineRange,

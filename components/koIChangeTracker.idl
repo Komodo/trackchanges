@@ -24,6 +24,7 @@ interface koIChangeTrackerHandler : nsISupports
 [scriptable, uuid(6018f475-6ad0-4158-ba32-500607ba60dc)]
 interface koIChangeTracker : nsISupports
 {
+    // Change types.
     const long CHANGES_NONE = 0;
     const long CHANGES_INSERT = 1;
     const long CHANGES_DELETE = 2;
@@ -35,7 +36,7 @@ interface koIChangeTracker : nsISupports
     void updateChangeTracker(in koIChangeTrackerHandler handler);
 
     void getOldAndNewLines(in long lineNo,
-                           in long changeMask,
+                           in long changeType,
                            out boolean oldEndsWithEOL,
                            out boolean newEndsWithEOL,
                            out unsigned long oldLineRangeCount,

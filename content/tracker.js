@@ -9,7 +9,7 @@ var timers = require("sdk/timers");
 const CHANGE_TRACKER_TIMEOUT_DELAY = 500; // msec
 
 var log = require("ko/logging").getLogger("CT::tracker.js");
-//log.setLevel(ko.logging.LOG_INFO);
+//log.setLevel(ko.logging.LOG_DEBUG);
 
 exports.ChangeTracker = function ChangeTracker(view) {
     this.enabled = view.prefs.getBoolean('trackchanges_enabled', true);
@@ -98,6 +98,7 @@ exports.ChangeTracker.prototype.update = function() {
     if (!this.enabled || !this.koChangeTracker) {
         return;
     }
+    log.debug("ChangeTracker::update");
     try {
         this.koChangeTracker.updateChangeTracker(this);
     } catch(ex) {
@@ -113,12 +114,12 @@ exports.ChangeTracker.prototype.updateWithDelay = function() {
     if (this._timeoutId !== null)
         timers.clearTimeout(this._timeoutId);
     // Create the new timer.
+    log.debug("ChangeTracker::updateWithDelay " + CHANGE_TRACKER_TIMEOUT_DELAY);
     this._timeoutId = timers.setTimeout(this.update.bind(this), CHANGE_TRACKER_TIMEOUT_DELAY);
 };
 
 exports.ChangeTracker.prototype.isLineChanged = function(lineNo) {
-    var changeMask = this.margin.activeMarkerMask(lineNo);
-    return changeMask !== 0;
+    return this.margin.changeTypeAtLine(lineNo) !== 0;
 };
 
 /**
