@@ -70,6 +70,9 @@ exports.ChangeTracker.prototype.changeTrackingOn = function() {
 };
 
 exports.ChangeTracker.prototype.changeTrackingOff = function(viewIsClosing) {
+    if (!this.margin) {
+        return;
+    }
     if (!viewIsClosing) {
         this.margin.clear();
         this.margin.hideMargin();
