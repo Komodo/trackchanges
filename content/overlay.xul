@@ -5,6 +5,8 @@
   %trackchangesDTD;
 ]>
 
+<?xml-stylesheet href="less://trackchanges/skin/trackchanges.less" type="text/css"?>
+
 <overlay id="trackchangesOverlay"
          xmlns:html="http://www.w3.org/1999/xhtml"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
@@ -13,19 +15,15 @@
 
     <popupset id="extensionPopupSet">
         <panel id="changeTracker_panel"
-               noautohide="true"
-               close="true"
                titlebar="normal"
-               noautofocus="true"
-               label="&thisMarkersChanges.label;">
-            <hbox flex="1" id="changeTracker_hbox">
+               noautofocus="true">
+            <iframe id="changeTracker_iframe"
+                    flex="1"/>
+            <hbox flex="1" id="changeTracker_hbox" pack="center" align="center">
                 <button id="changeTracker_undo"
                         label="&retractThisChange.label;"
                         />
             </hbox>
-            <iframe id="changeTracker_iframe"
-                    flex="1"
-                    style="width: 90ch; height: 40em;"/>
         </panel>
     </popupset>
 

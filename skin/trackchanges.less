@@ -1,0 +1,61 @@
+@import url("chrome://komodo/skin/_config/editor.less");
+
+#changeTracker_panel
+{
+    -moz-appearance: none;
+    border-radius: 4px;
+    padding: 4px;
+
+    iframe
+    {
+        width: 500px;
+    }
+}
+
+#changeTracker_panel[editorIsDark="false"]
+{
+    background: @editor-popup-background;
+}
+
+#changeTracker_panel[editorIsDark="true"]
+{
+    background: @editor-popup-lightbg-background;
+}
+
+body#changeTrackerFrame
+{
+    background: none transparent;
+    font-family: monospace;
+    font-size: 1em;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+
+    .header {
+        margin-bottom: 0px;
+        color: rgb(125,125,125);
+    }
+    .old {
+        margin-top: 4px;
+        margin-bottom: 0px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+    .comment {
+        color: rgb(125,125,125);
+    }
+    .new {
+        margin-top: 4px;
+        margin-bottom: 0px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+
+    pre
+    {
+        width: 100%;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+}

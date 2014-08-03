@@ -2,7 +2,7 @@ const { Cc, Ci } = require("chrome");
 const color = require("ko/color");
 
 var log = require("ko/logging").getLogger("CT::dialog.js");
-//log.setLevel(ko.logging.LOG_INFO);
+log.setLevel(ko.logging.LOG_DEBUG);
 
 var fileSvc = Cc["@activestate.com/koFileService;1"].getService(Ci.koIFileService);
 
@@ -42,9 +42,14 @@ exports.showChanges = function(tracker, lineNo) {
     var oldColor = color.longToHex(color.BGRToRGB(tracker.margin.deleteColor));
     var newColor = color.longToHex(color.BGRToRGB(tracker.margin.insertColor));
 
-    var escapeLines = function(textLines) {
+    var view = ko.views.manager.currentView
+    var scheme = view.scheme;
+    var fontFamily = scheme.getFont("default");
+    var fontSize = scheme.getSize(view.koDoc.language, "default");
+
+    var escapeLines = function(textLines, prefix) {
         return textLines.map(function(s) {
-            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return prefix + s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         })
     }
 
@@ -56,36 +61,20 @@ exports.showChanges = function(tracker, lineNo) {
         '<html>',
         '<head>',
         '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
+        '<link rel="stylesheet" type="text/css" href="less://trackchanges/skin/trackchanges.less">',
         '<style>',
         'body {',
-        '    color: black;',
-        '    background-color: white;',
-        '    font-family: sans-serif;',
-        '    font-size: medium;',
+        '   font-family: ' + fontFamily + ' !important;',
+        '   font-size: ' + fontSize + 'pt !important;',
         '}',
-        'pre.header {',
-        '    margin-bottom: 0px;',
+        '.old {',
+        '    color: ' + oldColor + ' ; /* default: #ffbbbb: light red */',
         '}',
-        'pre.old {',
-        '    background-color: ' + oldColor + ' ; /* default: #ffbbbb: light red */',
-        '    margin-top: 4px;',
-        '    margin-bottom: 0px;',
-        '    padding-top: 0px;',
-        '    padding-bottom: 0px;',
-        '}',
-        'pre span.comment {',
-        '    font-style: italic;',
-        '    color: #808080;',
-        '}',
-        'pre.new {',
-        '    background-color: ' + newColor + '; /* default: #c1fdbb: light rgb[1] */',
-        '    margin-top: 4px;',
-        '    margin-bottom: 0px;',
-        '    padding-top: 0px;',
-        '    padding-bottom: 0px;',
+        '.new {',
+        '    color: ' + newColor + '; /* default: #c1fdbb: light rgb[1] */',
         '}',
         '</style>',
-        '<body>',
+        '<body id="changeTrackerFrame">',
         '<pre class="header">',
         ('@@ -'
          + (oldLineRange[0] + 1)
@@ -97,13 +86,13 @@ exports.showChanges = function(tracker, lineNo) {
          + (newLineRange[1] + 1)
          + ' @@'),
         '</pre>',
-        '<pre class="old">'].
-    concat(escapeLines(oldLines)).
+        '<pre disabled="true" class="old">'].
+    concat(escapeLines(oldLines, "-")).
     concat(noNewlineAtEndOfOldLines).
     concat([
         '</pre>',
-        '<pre class="new">',]).
-    concat(escapeLines(newLines)).
+        '<pre disabled="true" class="new">',]).
+    concat(escapeLines(newLines, "+")).
     concat(noNewlineAtEndOfNewLines).
     concat([
             '</pre>',
@@ -157,6 +146,9 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
     iframe.setAttribute("src", htmlFile.URI);
     var [x, y] = view._last_mousemove_xy;
 
+    var isDark = ko.views.manager.currentView.scintilla.getAttribute("isDark");
+    panel.setAttribute("editorIsDark", isDark);
+
     // Event handlers.
     var panelBlurHandler = function(event) {
         panel.hidePopup();
@@ -170,8 +162,25 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
     };
     var iframeLoadedFunc = function(event) {
         try {
+            var iframe = panel.getElementsByTagName("iframe")[0];
+
             panel.openPopup(view, "after_pointer", x, y, false, false);
-            panel.sizeTo(600, 400);
+
+            if ( ! ("initDim" in panel))
+            {
+                panel.initDim = {
+                    height: panel.boxObject.height
+                }
+            }
+
+            var body = iframe.contentWindow.document.body;
+
+            iframe.initDim = {
+                height: body.scrollHeight
+            }
+
+            iframe.style.height = (body.offsetHeight + 10) + "px";
+            
             fileSvc.deleteTempFile(htmlFile.path, true);
             undoButton.addEventListener("command", undoTextFunc, false);
         } catch(ex) {
