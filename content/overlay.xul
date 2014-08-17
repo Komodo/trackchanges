@@ -16,7 +16,8 @@
     <popupset id="extensionPopupSet">
         <panel id="changeTracker_panel"
                titlebar="normal"
-               noautofocus="true">
+               noautofocus="true"
+               class="hud">
             <iframe id="changeTracker_iframe"
                     flex="1"/>
             <hbox flex="1" id="changeTracker_hbox" pack="center" align="center">

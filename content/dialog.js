@@ -67,12 +67,6 @@ exports.showChanges = function(tracker, lineNo) {
         '   font-family: ' + fontFamily + ' !important;',
         '   font-size: ' + fontSize + 'pt !important;',
         '}',
-        '.old {',
-        '    color: ' + oldColor + ' ; /* default: #ffbbbb: light red */',
-        '}',
-        '.new {',
-        '    color: ' + newColor + '; /* default: #c1fdbb: light rgb[1] */',
-        '}',
         '</style>',
         '<body id="changeTrackerFrame">',
         '<pre class="header">',
@@ -145,9 +139,6 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
     var undoButton = document.getElementById('changeTracker_undo');
     iframe.setAttribute("src", htmlFile.URI);
     var [x, y] = view._last_mousemove_xy;
-
-    var isDark = ko.views.manager.currentView.scintilla.getAttribute("isDark");
-    panel.setAttribute("editorIsDark", isDark);
 
     // Event handlers.
     var panelBlurHandler = function(event) {

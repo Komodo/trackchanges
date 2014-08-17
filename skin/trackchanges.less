@@ -12,16 +12,6 @@
     }
 }
 
-#changeTracker_panel[editorIsDark="false"]
-{
-    background: @editor-popup-background;
-}
-
-#changeTracker_panel[editorIsDark="true"]
-{
-    background: @editor-popup-lightbg-background;
-}
-
 body#changeTrackerFrame
 {
     background: none transparent;
@@ -31,24 +21,32 @@ body#changeTrackerFrame
     padding: 0;
     overflow-x: hidden;
 
-    .header {
+    .header
+    {
         margin-bottom: 0px;
         color: rgb(125,125,125);
     }
-    .old {
+    .old,
+    .new
+    {
         margin-top: 4px;
         margin-bottom: 0px;
         padding-top: 0px;
         padding-bottom: 0px;
     }
-    .comment {
+    .comment
+    {
         color: rgb(125,125,125);
     }
-    .new {
-        margin-top: 4px;
-        margin-bottom: 0px;
-        padding-top: 0px;
-        padding-bottom: 0px;
+
+    .old
+    {
+        color: rgb(170, 70, 70);
+    }
+
+    .new
+    {
+        color: rgb(70,170,70);
     }
 
     pre
