@@ -99,9 +99,6 @@ class DocumentChangeTracker(object):
             raise ServerException(nsError.NS_ERROR_FAILURE, "koDoc reference has expired")
         return UnwrapObject(doc)
 
-    def _getBufferTextAsUtf8Lines(self, keepEOLs=False):
-        return self.koDoc.utf8Text.splitlines(keepEOLs)
-
     @components.ProxyToMainThread
     def notifyError(self, handler, message):
         handler.onError(message)
@@ -174,7 +171,7 @@ class DocumentChangeTracker(object):
         keepEOLs = False
         if ondisk_lines and ondisk_lines[0] and ondisk_lines[0][-1] in "\r\n":
             keepEOLs = True
-        inmemory_lines = self._getBufferTextAsUtf8Lines(keepEOLs=keepEOLs)
+        inmemory_lines = self.koDoc.buffer.splitlines(keepEOLs)
         changes = self._generateDiffOpcodes(ondisk_lines, inmemory_lines)
         self.notifyChanges(handler, changes)
         self._reference_lines = ondisk_lines
