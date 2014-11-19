@@ -3,7 +3,7 @@
  * the raw file changes (koIChangeTracker).
  */
 
-var { Ci, Cr } = require("chrome");
+var { Ci, Cr, Cc } = require("chrome");
 var timers = require("sdk/timers");
 
 const CHANGE_TRACKER_TIMEOUT_DELAY = 500; // msec
@@ -80,6 +80,57 @@ exports.ChangeTracker.prototype.changeTrackingOff = function(viewIsClosing) {
     this.margin.close();
     this.margin = null;
 };
+
+exports.ChangeTracker.prototype.getFormattedPatch = function() {
+    var oldLines = {}, newLines = {}, oldLineRange = {}, newLineRange = {};
+    var oldEndsWithEOL = {}, newEndsWithEOL = {};
+    this.koChangeTracker.getOldAndNewLines(null, null,
+                                oldEndsWithEOL,
+                                newEndsWithEOL,
+                                {}, oldLineRange,
+                                {}, newLineRange,
+                                {}, oldLines,
+                                {}, newLines);
+
+    oldLineRange = oldLineRange.value;
+    newLineRange = newLineRange.value;
+    oldLines = oldLines.value;
+    newLines = newLines.value;
+
+    var partSvc = Cc["@activestate.com/koPartService;1"].getService(Ci.koIPartService);
+    var curProject = partSvc.currentProject;
+    var path = this.view.koDoc.file.path;
+    if (curProject)
+    {
+        path = path.replace(curProject.liveDirectory, "");
+    }
+    else
+    {
+        var placesPath = ko.uriparse.URIToPath(ko.places.getDirectory());
+        path = path.replace(placesPath, "");
+    }
+
+    var patch = "Index: " + this.view.koDoc.file.path + "\n";
+    patch += "--- a" + path + "\n";
+    patch += "+++ b" + path + "\n";
+    patch += '@@ -'
+     + (oldLineRange[0] + 1)
+     + ','
+     + (oldLineRange[1] - oldLineRange[0])
+     + ' +'
+     + (newLineRange[0] + 1)
+     + ','
+     + (newLineRange[1] - newLineRange[0])
+     + ' @@' + "\n";
+
+    var editor = require("ko/editor");
+    patch += " " + editor.getLine(newLineRange[0]) + "\n";
+    patch += oldLines.map(function(s) '-' + s).join("\n") + "\n";
+    patch += newLines.map(function(s) '+' + s).join("\n") + "\n";
+    patch += " " + editor.getLine(newLineRange[1] + 1) + "\n";
+
+    return patch;
+}
 
 exports.ChangeTracker.prototype.observe = function(doc, topic, data) {
     if (topic == 'trackchanges_enabled') {

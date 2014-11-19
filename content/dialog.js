@@ -73,11 +73,11 @@ exports.showChanges = function(tracker, lineNo) {
         ('@@ -'
          + (oldLineRange[0] + 1)
          + ','
-         + (oldLineRange[1] + 1)
+         + (oldLineRange[1] - oldLineRange[0])
          + ' +'
          + (newLineRange[0] + 1)
          + ','
-         + (newLineRange[1] + 1)
+         + (newLineRange[1] - newLineRange[0])
          + ' @@'),
         '</pre>',
         '<pre disabled="true" class="old">'].
