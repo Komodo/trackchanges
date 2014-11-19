@@ -285,6 +285,14 @@ class DocumentChangeTracker(object):
 
     @components.ProxyToMainThread
     def getOldAndNewLines(self, lineno, change_type):
+        if not lineno and hasattr(self, "lastLineNo"):
+            lineno = self.lastLineNo
+        self.lastLineNo = lineno
+            
+        if not change_type and hasattr(self, "lastChangeType"):
+            change_type = self.lastChangeType
+        self.lastChangeType = change_type
+
         old_ends_with_eol = new_ends_with_eol = True
         #XXX: Check old_ends_with_eol and new_ends_with_eol
         old_lines = []
