@@ -28,4 +28,13 @@
         </panel>
     </popupset>
 
+    <commandset id="allcommands">
+        <command id="cmd_trackchanges_nextChange"
+                 oncommand="ko.commands.doCode(this, 'ko.changeTracker.moveToNextChange()');"
+                 desc="&cmd_trackchanges_nextChange.description;" />
+        <command id="cmd_trackchanges_previousChange"
+                 oncommand="ko.commands.doCode(this, 'ko.changeTracker.moveToPreviousChange()');"
+                 desc="&cmd_trackchanges_previousChange.description;" />
+    </commandset>
+
 </overlay>

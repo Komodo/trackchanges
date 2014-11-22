@@ -142,3 +142,17 @@ exports.ChangeTracker.prototype.showChanges = function(lineNo) {
     var dialog = require("./dialog");
     dialog.showChanges(this, lineNo);
 }
+
+/**
+ * Find and move to the next change in the document.
+ */
+exports.ChangeTracker.prototype.moveToNextChange = function() {
+    this.margin.moveToNextChange();
+}
+
+/**
+ * Find and move to the previous change in the document.
+ */
+exports.ChangeTracker.prototype.moveToPreviousChange = function() {
+    this.margin.moveToPreviousChange();
+}

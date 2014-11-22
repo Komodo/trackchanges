@@ -178,6 +178,28 @@ exports.MarginController.prototype = {
         updateLineMarkers(genLinesFromLineRange(replacement_ranges), MARKER_REPLACEMENT);
     },
 
+    moveToNextChange: function() {
+        const scimoz = this.view.scimoz;
+        let lineNo = scimoz.lineFromPosition(scimoz.currentPos);
+        let nextNo = scimoz.markerNext(lineNo+1, MARKER_MASK);
+        if (nextNo != -1) {
+            scimoz.gotoPos(scimoz.positionFromLine(nextNo));
+            this.view.verticallyAlignCaret("onethird");
+            scimoz.chooseCaretX();
+        }
+    },
+
+    moveToPreviousChange: function() {
+        const scimoz = this.view.scimoz;
+        let lineNo = scimoz.lineFromPosition(scimoz.currentPos);
+        let nextNo = scimoz.markerPrevious(lineNo-1, MARKER_MASK);
+        if (nextNo != -1) {
+            scimoz.gotoPos(scimoz.positionFromLine(nextNo));
+            this.view.verticallyAlignCaret("onethird");
+            scimoz.chooseCaretX();
+        }
+    },
+
     __EOF__: null
 };
 

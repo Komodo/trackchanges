@@ -154,6 +154,28 @@ this.onMarginGetTooltipText = function(event) {
     }
 };
 
+this.moveToNextChange = function(event) {
+    try {
+        var view = ko.views.manager.currentView;
+        if (view && view.changeTracker && view.changeTracker.enabled) {
+            view.changeTracker.moveToNextChange();
+        }
+    } catch(ex) {
+        log.exception(ex, "changeTracker error: moveToNextChange");
+    }
+}
+
+this.moveToPreviousChange = function(event) {
+    try {
+        var view = ko.views.manager.currentView;
+        if (view && view.changeTracker && view.changeTracker.enabled) {
+            view.changeTracker.moveToPreviousChange();
+        }
+    } catch(ex) {
+        log.exception(ex, "changeTracker error: moveToPreviousChange");
+    }
+}
+
 }).apply(ko.changeTracker);
 
 
