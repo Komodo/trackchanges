@@ -68,7 +68,7 @@ exports.showChanges = function(tracker, lineNo) {
         '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
         '<link rel="stylesheet" type="text/css" href="less://trackchanges/skin/trackchanges.less">',
         '<style>',
-        'body {',
+        'pre {',
         '   font-family: ' + fontFamily + ' !important;',
         '   font-size: ' + fontSize + fontUnit + ' !important;',
         '}',
