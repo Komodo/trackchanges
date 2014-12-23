@@ -46,6 +46,11 @@ exports.showChanges = function(tracker, lineNo) {
     var scheme = view.scheme;
     var fontFamily = scheme.getFont("default");
     var fontSize = scheme.getSize(view.koDoc.language, "default");
+    var fontUnit = "pt";
+    if ("Darwin" == Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS) {
+      // on Max OSX, use px instead of pt due to odd sizing issues
+      fontUnit = "px";
+    }
 
     var escapeLines = function(textLines, prefix) {
         return textLines.map(function(s) {
@@ -65,7 +70,7 @@ exports.showChanges = function(tracker, lineNo) {
         '<style>',
         'body {',
         '   font-family: ' + fontFamily + ' !important;',
-        '   font-size: ' + fontSize + 'pt !important;',
+        '   font-size: ' + fontSize + fontUnit + ' !important;',
         '}',
         '</style>',
         '<body id="changeTrackerFrame">',
