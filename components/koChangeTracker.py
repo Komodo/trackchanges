@@ -278,7 +278,7 @@ class DocumentChangeTracker(object):
             return
 
         # Asynchronously fetch and update the file changes.
-        if koFile.sccType:
+        if hasattr(koFile, "sccType") and koFile.sccType:
             self.getSccChangesAsync(handler)
         else:
             self.getDiskChangesAsync(handler, koDoc, koFile)
