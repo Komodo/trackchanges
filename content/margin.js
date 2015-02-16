@@ -181,7 +181,13 @@ exports.MarginController.prototype = {
     moveToNextChange: function() {
         const scimoz = this.view.scimoz;
         let lineNo = scimoz.lineFromPosition(scimoz.currentPos);
+        // Find next marker line.
         let nextNo = scimoz.markerNext(lineNo+1, MARKER_MASK);
+        // We must skip over all lines in the same change region.
+        while (nextNo > 0 && nextNo == (lineNo+1)) {
+            lineNo = nextNo;
+            nextNo = scimoz.markerNext(nextNo+1, MARKER_MASK);
+        }
         if (nextNo != -1) {
             scimoz.gotoPos(scimoz.positionFromLine(nextNo));
             this.view.verticallyAlignCaret("onethird");
@@ -192,7 +198,13 @@ exports.MarginController.prototype = {
     moveToPreviousChange: function() {
         const scimoz = this.view.scimoz;
         let lineNo = scimoz.lineFromPosition(scimoz.currentPos);
-        let nextNo = scimoz.markerPrevious(lineNo-1, MARKER_MASK);
+        // Find previous marker line.
+        let nextNo = scimoz.markerNext(lineNo-1, MARKER_MASK);
+        // We must skip over all lines in the same change region.
+        while (nextNo >= 0 && nextNo == (lineNo-1)) {
+            lineNo = nextNo;
+            nextNo = scimoz.markerNext(nextNo-1, MARKER_MASK);
+        }
         if (nextNo != -1) {
             scimoz.gotoPos(scimoz.positionFromLine(nextNo));
             this.view.verticallyAlignCaret("onethird");
