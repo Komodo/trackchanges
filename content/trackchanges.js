@@ -58,6 +58,9 @@ this.init = function() {
         }
     });
 
+    // OSX does not properly handle panel focus, so we have to get creative
+    // when figuring out if the click was on our panel or not
+    // https://bugs.activestate.com/show_bug.cgi?id=106316
     window.addEventListener("mouseup", function(e) {
         if (panel.state == "closed" || panel.state == "hiding") return;
         var bo = panel.boxObject;
