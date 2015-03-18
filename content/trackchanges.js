@@ -49,22 +49,6 @@ this.init = function() {
             this.onViewOpenedHandler({originalTarget: view});
         }
     }.bind(this));
-
-    var panel = document.getElementById('changeTracker_panel');
-    panel.addEventListener("keydown", function(e) {
-        // won't work on OSX, no idea why - OSX just WILL NOT focus the panel
-        if (e.keyCode == 27) { // escape
-            panel.hidePopup();
-        }
-    });
-
-    window.addEventListener("mouseup", function(e) {
-        if (panel.state == "closed" || panel.state == "hiding") return;
-        var bo = panel.boxObject;
-        if (e.clientX >= bo.x && e.clientX < (bo.x + bo.width)) return;
-        if (e.clientY >= bo.y && e.clientY < (bo.y + bo.height)) return;
-        panel.hidePopup();
-    });
 };
 
 this.onWindowClosingHandler = function() {
