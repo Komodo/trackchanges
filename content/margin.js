@@ -199,11 +199,11 @@ exports.MarginController.prototype = {
         const scimoz = this.view.scimoz;
         let lineNo = scimoz.lineFromPosition(scimoz.currentPos);
         // Find previous marker line.
-        let nextNo = scimoz.markerNext(lineNo-1, MARKER_MASK);
+        let nextNo = scimoz.markerPrevious(lineNo-1, MARKER_MASK);
         // We must skip over all lines in the same change region.
         while (nextNo >= 0 && nextNo == (lineNo-1)) {
             lineNo = nextNo;
-            nextNo = scimoz.markerNext(nextNo-1, MARKER_MASK);
+            nextNo = scimoz.markerPrevious(nextNo-1, MARKER_MASK);
         }
         if (nextNo != -1) {
             scimoz.gotoPos(scimoz.positionFromLine(nextNo));
