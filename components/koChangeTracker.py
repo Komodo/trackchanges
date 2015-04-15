@@ -350,6 +350,14 @@ class DocumentChangeTracker(object):
             last_pos = scimoz.getLineEndPosition(new_line_range[1] - 1)
             text = first_pos < last_pos and scimoz.getTextRange(first_pos, last_pos) or ""
             new_lines = text.splitlines()
+            
+        try:
+            force_utf8 = lambda x: x.encode("utf8", 'strict')
+            old_lines = map(force_utf8, old_lines)
+            new_lines = map(force_utf8, new_lines)
+        except Exception as ex:
+            log.exception("Exception while trying to force UTF8: %s", ex)
+        
         return [old_ends_with_eol, new_ends_with_eol,
                 old_line_range, new_line_range,
                 old_lines, new_lines]
