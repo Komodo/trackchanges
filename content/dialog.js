@@ -161,7 +161,10 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
             var iframe = panel.getElementsByTagName("iframe")[0];
 
             panel.openPopup(view, "after_pointer", x, y, false, false);
-
+            window.focus();
+            panel.focus();
+            undoButton.focus();
+            
             if ( ! ("initDim" in panel))
             {
                 panel.initDim = {
@@ -190,6 +193,7 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
         panel.removeEventListener("keypress", escapeHandler, false);
         panel.removeEventListener("blur", panelBlurHandler, false);
         view.removeEventListener("focus", panelBlurHandler, false);
+        require("ko/editor").focus();
     };
 
     iframe.addEventListener("load", iframeLoadedFunc, true);
