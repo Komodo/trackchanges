@@ -97,7 +97,10 @@ class DocumentChangeTracker(object):
                 pass  # dead object
         if doc is None:
             raise ServerException(nsError.NS_ERROR_FAILURE, "koDoc reference has expired")
-        return UnwrapObject(doc)
+        if not doc.isCollab():
+            return UnwrapObject(doc)
+        else:
+            return doc # for some reason, collab docs are already unwrapped
 
     @components.ProxyToMainThread
     def notifyError(self, handler, message):
@@ -112,7 +115,7 @@ class DocumentChangeTracker(object):
             deleted_text_line_range = self.deleted_text_line_range
 
             lim = len(changes)
-            lineCount = self.koDoc._views[0].scimoz.lineCount
+            lineCount = self.koDoc.getView().scimoz.lineCount
             for change in changes:
                 tag = change.tag
                 i1 = change.i1
@@ -139,6 +142,7 @@ class DocumentChangeTracker(object):
                     log.error("Unexpected diff opcode tag: %s", tag);
 
             # Send changes to handler.
+            name = not self.koDoc.isCollab() and self.koDoc.file.leafName or 'collab'
             deleted_lines = deleted_text_line_range.keys()
             inserted_lines = list(chain(*(last_insertions.items())))
             modified_lines = list(chain(*(last_modifications.items())))
@@ -146,7 +150,7 @@ class DocumentChangeTracker(object):
                       "  deleted_lines: %r\n"
                       "  inserted_lines: %r\n"
                       "  modified_lines: %r",
-                      self.koDoc.file.leafName, deleted_lines, inserted_lines, modified_lines)
+                      name, deleted_lines, inserted_lines, modified_lines)
             try:
                 handler.markChanges(deleted_lines, inserted_lines, modified_lines)
             except Exception as innex:
@@ -270,18 +274,29 @@ class DocumentChangeTracker(object):
         # Remember the handler for the request.
         self._scc_cat_request.data = handler
 
+    def collabStoreState(self):
+        """
+        Mark the existing buffer contents as 'saved' for collaborative
+        documents. Changes from this current state will now be tracked.
+        """
+        if self.koDoc.isCollab():
+            self._reference_lines = self.koDoc.buffer.splitlines(True)
+            log.debug("Stored collab state: %r", self._reference_lines)
+
     def updateChangeTracker(self, handler):
         koDoc = self.koDoc
         koFile = koDoc.file
-        if koFile is None:
-            log.info("updateChangeTracker:: no file - abort")
-            return
-
-        # Asynchronously fetch and update the file changes.
-        if hasattr(koFile, "sccType") and koFile.sccType:
-            self.getSccChangesAsync(handler)
+        if koFile is not None:
+            # Asynchronously fetch and update the file changes.
+            if hasattr(koFile, "sccType") and koFile.sccType:
+                self.getSccChangesAsync(handler)
+            else:
+                self.getDiskChangesAsync(handler, koDoc, koFile)
+        elif self.koDoc.isCollab():
+            log.info("updateChangeTracker:: collab file")
+            self._notifyFileChanges(handler, self._reference_lines or [])
         else:
-            self.getDiskChangesAsync(handler, koDoc, koFile)
+            log.info("updateChangeTracker:: no file and no collab - abort")
 
     @components.ProxyToMainThread
     def getOldAndNewLines(self, lineno, change_type):

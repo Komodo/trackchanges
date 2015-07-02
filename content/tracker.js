@@ -172,6 +172,23 @@ exports.ChangeTracker.prototype.updateWithDelay = function() {
     this._timeoutId = timers.setTimeout(this.update.bind(this), CHANGE_TRACKER_TIMEOUT_DELAY);
 };
 
+/**
+ * Mark the existing buffer contents as 'saved' for collaborative documents.
+ * Changes from this current state will now be tracked.
+ */
+exports.ChangeTracker.prototype.collabStoreState = function() {
+    if (!this.enabled || !this.koChangeTracker) {
+        return;
+    }
+    log.debug("ChangeTracker::collabStoreState");
+    try {
+        this.koChangeTracker.collabStoreState();
+        this.update(); // clear all change markers
+    } catch(ex) {
+        log.exception(ex, "collabStoreState failed: ");
+    }
+}
+
 exports.ChangeTracker.prototype.isLineChanged = function(lineNo) {
     return this.margin.changeTypeAtLine(lineNo) !== 0;
 };

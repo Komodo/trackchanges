@@ -35,6 +35,8 @@ interface koIChangeTracker : nsISupports
 
     void updateChangeTracker(in koIChangeTrackerHandler handler);
 
+    void collabStoreState();
+
     void getOldAndNewLines(in long lineNo,
                            in long changeType,
                            out boolean oldEndsWithEOL,
