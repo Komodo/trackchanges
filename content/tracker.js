@@ -200,6 +200,13 @@ exports.ChangeTracker.prototype.onError = function (message) {
     ko.statusBar.AddMessage(message, "ChangeTracker", 3000, true);
 }
 exports.ChangeTracker.prototype.markChanges = function (dcount, deletions, icount, insertions, mcount, modifications) {
+    if (!this.margin) {
+        // This may happen in collab documents where `markChanges()` is called
+        // before `this.margin` is initialized. Normally async callbacks are
+        // used with filesystem files, which gives `this.margin` enough time to
+        // initialize.
+        return;
+    }
     this.margin.markChanges(deletions, insertions, modifications);
 };
 
