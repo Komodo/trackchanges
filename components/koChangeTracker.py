@@ -288,10 +288,14 @@ class DocumentChangeTracker(object):
         koFile = koDoc.file
         if koFile is not None:
             # Asynchronously fetch and update the file changes.
-            if hasattr(koFile, "sccType") and koFile.sccType:
-                self.getSccChangesAsync(handler)
-            else:
-                self.getDiskChangesAsync(handler, koDoc, koFile)
+            try:
+                if hasattr(koFile, "sccType") and koFile.sccType:
+                    self.getSccChangesAsync(handler)
+                else:
+                    self.getDiskChangesAsync(handler, koDoc, koFile)
+            except Exception as ex:
+                log.exception("Exception while trying retrieve changes", ex) 
+                
         elif self.koDoc.isCollab():
             log.info("updateChangeTracker:: collab file")
             self._notifyFileChanges(handler, self._reference_lines or [])
