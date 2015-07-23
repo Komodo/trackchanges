@@ -295,8 +295,7 @@ class DocumentChangeTracker(object):
                     self.getDiskChangesAsync(handler, koDoc, koFile)
             except Exception as ex:
                 log.exception("Exception while trying retrieve changes", ex) 
-                
-        elif self.koDoc.isCollab():
+        elif "isCollab" in dir(self.koDoc) and self.koDoc.isCollab():
             log.info("updateChangeTracker:: collab file")
             self._notifyFileChanges(handler, self._reference_lines or [])
         else:
