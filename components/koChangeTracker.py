@@ -97,7 +97,7 @@ class DocumentChangeTracker(object):
                 pass  # dead object
         if doc is None:
             raise ServerException(nsError.NS_ERROR_FAILURE, "koDoc reference has expired")
-        if not doc.isCollab():
+        if not "isCollab" in dir(doc) or not doc.isCollab():
             return UnwrapObject(doc)
         else:
             return doc # for some reason, collab docs are already unwrapped
@@ -142,7 +142,9 @@ class DocumentChangeTracker(object):
                     log.error("Unexpected diff opcode tag: %s", tag);
 
             # Send changes to handler.
-            name = not self.koDoc.isCollab() and self.koDoc.file.leafName or 'collab'
+            name = self.koDoc.file.leafName
+            if "isCollab" in dir(self.koDoc) and self.koDoc.isCollab():
+                name = 'collab'
             deleted_lines = deleted_text_line_range.keys()
             inserted_lines = list(chain(*(last_insertions.items())))
             modified_lines = list(chain(*(last_modifications.items())))
@@ -279,7 +281,7 @@ class DocumentChangeTracker(object):
         Mark the existing buffer contents as 'saved' for collaborative
         documents. Changes from this current state will now be tracked.
         """
-        if self.koDoc.isCollab():
+        if "isCollab" in dir(self.koDoc) and self.koDoc.isCollab():
             self._reference_lines = self.koDoc.buffer.splitlines(True)
             log.debug("Stored collab state: %r", self._reference_lines)
 
