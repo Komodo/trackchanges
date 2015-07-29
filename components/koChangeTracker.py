@@ -142,9 +142,10 @@ class DocumentChangeTracker(object):
                     log.error("Unexpected diff opcode tag: %s", tag);
 
             # Send changes to handler.
-            name = self.koDoc.file.leafName
             if "isCollab" in dir(self.koDoc) and self.koDoc.isCollab():
                 name = 'collab'
+            else:
+                name = self.koDoc.file.leafName
             deleted_lines = deleted_text_line_range.keys()
             inserted_lines = list(chain(*(last_insertions.items())))
             modified_lines = list(chain(*(last_modifications.items())))
