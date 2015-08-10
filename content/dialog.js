@@ -146,7 +146,16 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
     var [x, y] = view._last_mousemove_xy;
 
     // Event handlers.
-    var panelBlurHandler = function(event) {
+    var panelBlurHandler = function(e) {
+        if (panel.state != "open") return;
+        var bo = panel.boxObject;
+        if ((e.screenX > bo.screenX && e.screenX < (bo.screenX + bo.width)) &&
+            (e.screenY > bo.screenY && e.screenY < (bo.screenY + bo.height)))
+        {
+            return;
+        }
+
+        window.removeEventListener("click", panelBlurHandler, false);
         panel.hidePopup();
     };
     var escapeHandler = function(event) {
@@ -160,11 +169,11 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
         try {
             var iframe = panel.getElementsByTagName("iframe")[0];
 
-            panel.openPopup(view, "after_pointer", x, y, false, false);
+            panel.openPopup(view, "after_pointer", x, y);
             window.focus();
             panel.focus();
             undoButton.focus();
-            
+
             if ( ! ("initDim" in panel))
             {
                 panel.initDim = {
@@ -185,20 +194,22 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
         } catch(ex) {
             log.exception(ex, "problem in iframeLoadedFunc\n");
         }
+        
+        setTimeout(function() {
+            panel.addEventListener("popuphidden", panelHiddenFunc, true);
+            panel.addEventListener("keypress", escapeHandler, false);
+            window.addEventListener("click", panelBlurHandler, false);
+        }, 50);
     }
     var panelHiddenFunc = function(event) {
         undoButton.removeEventListener("command", undoTextFunc, false);
         iframe.removeEventListener("load", iframeLoadedFunc, true);
-        panel.removeEventListener("popuphidden", panelHiddenFunc, false);
+        panel.removeEventListener("popuphidden", panelHiddenFunc, true);
         panel.removeEventListener("keypress", escapeHandler, false);
-        panel.removeEventListener("blur", panelBlurHandler, false);
-        view.removeEventListener("focus", panelBlurHandler, false);
+        window.removeEventListener("click", panelBlurHandler, false);
+      
         require("ko/editor").focus();
     };
-
+    
     iframe.addEventListener("load", iframeLoadedFunc, true);
-    panel.addEventListener("popuphidden", panelHiddenFunc, true);
-    panel.addEventListener("keypress", escapeHandler, false);
-    panel.addEventListener("blur", panelBlurHandler, false);
-    view.addEventListener("focus", panelBlurHandler, false);
 };
