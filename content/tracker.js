@@ -197,7 +197,7 @@ exports.ChangeTracker.prototype.isLineChanged = function(lineNo) {
  * koIChangeTrackerHandler implementation.
  */
 exports.ChangeTracker.prototype.onError = function (message) {
-    ko.statusBar.AddMessage(message, "ChangeTracker", 3000, true);
+    log.error(message);
 }
 exports.ChangeTracker.prototype.markChanges = function (dcount, deletions, icount, insertions, mcount, modifications) {
     if (!this.margin) {
