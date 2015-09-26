@@ -115,7 +115,12 @@ class DocumentChangeTracker(object):
             deleted_text_line_range = self.deleted_text_line_range
 
             lim = len(changes)
-            lineCount = self.koDoc.getView().scimoz.lineCount
+            view = self.koDoc.getViewIfExists()
+            if not view:
+                log.warn("View no longer exists, exiting")
+                return
+            
+            lineCount = view.scimoz.lineCount
             for change in changes:
                 tag = change.tag
                 i1 = change.i1
