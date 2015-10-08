@@ -115,7 +115,10 @@ class DocumentChangeTracker(object):
             deleted_text_line_range = self.deleted_text_line_range
 
             lim = len(changes)
-            view = self.koDoc.getViewIfExists()
+            try:
+                view = self.koDoc.getView()
+            except ServerException:
+                view = False
             if not view:
                 log.warn("View no longer exists, exiting")
                 return
