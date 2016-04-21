@@ -1,3 +1,6 @@
+@import url("chrome://komodo/skin/global/colors.less");
+@import url("resource://profile/colors.less");
+
 #changeTracker_panel
 {
     -moz-appearance: none;
@@ -17,11 +20,7 @@ body#changeTrackerFrame
     padding: 0;
     overflow-x: hidden;
 
-    .header
-    {
-        margin-bottom: 0px;
-        color: rgb(125,125,125);
-    }
+
     .old,
     .new
     {
@@ -32,17 +31,17 @@ body#changeTrackerFrame
     }
     .comment
     {
-        color: rgb(125,125,125);
+        color: fade(@foreground, 70%);
     }
 
     .old
     {
-        color: rgb(170, 70, 70);
+        color: @scc-deleted;
     }
 
     .new
     {
-        color: rgb(70,170,70);
+        color: @scc-new;
     }
 
     pre

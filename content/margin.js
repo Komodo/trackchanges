@@ -50,18 +50,21 @@ exports.MarginController.prototype = {
         // Get the track changes colors directly from the color scheme.
         // Note that scintilla uses BGR color values (urgh).
         try {
-            this.insertColor = this.view.scheme.getScintillaColor("changeMarginInserted");
+            this.insertColor = this.view.scheme.getInterfaceStyleRaw('scc new', 'fore');
         } catch(ex) {
+            this.insertColor = 65331;
             log.exception(ex, "couldn't get the insert-color");
         }
         try {
-            this.deleteColor = this.view.scheme.getScintillaColor("changeMarginDeleted");
+            this.deleteColor = this.view.scheme.getInterfaceStyleRaw('scc deleted', 'fore');
         } catch(ex) {
+            this.deletedColor = 255;
             log.exception(ex, "couldn't get the delete-color");
         }
         try {
-            this.replaceColor = this.view.scheme.getScintillaColor("changeMarginReplaced");
-        } catch(e) {
+            this.replaceColor = this.view.scheme.getInterfaceStyleRaw('scc modified', 'fore');
+        } catch(ex) {
+            this.replaceColor = 16737792;
             log.exception(ex, "couldn't get the change-color");
         }
 

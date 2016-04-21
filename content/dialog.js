@@ -39,8 +39,6 @@ exports.showChanges = function(tracker, lineNo) {
     var noNewlineAtEndOfOldLines  = !oldEndsWithEOL ? [missingNewline] : [];
     var noNewlineAtEndOfNewLines  = !newEndsWithEOL ? [missingNewline] : [];
     // Convert Scintilla colors to hex RGB colors.
-    var oldColor = color.longToHex(color.BGRToRGB(tracker.margin.deleteColor));
-    var newColor = color.longToHex(color.BGRToRGB(tracker.margin.insertColor));
 
     var view = ko.views.manager.currentView
     var scheme = view.scheme;
