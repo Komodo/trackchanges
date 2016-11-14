@@ -2,8 +2,11 @@
  * Margin - manages the scintilla margin to show file changes.
  */
 
-const { Ci } = require("chrome");
+const { Ci, Cc } = require("chrome");
 const color = require("ko/color");
+const prefs = require("ko/prefs");
+
+const observerSvc = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService);
 
 const MARGIN_TEXT_LENGTH = 1;
 const MARGIN_CHANGEMARGIN = Ci.ISciMoz.MARGIN_TRACKING;
@@ -39,6 +42,9 @@ exports.MarginController = function MarginController(view) {
     this.replaceColor = 0xe8d362; // BGR for a muted blue
     // Setup the margin styling.
     this.refreshMarginProperies();
+    
+    prefs.prefObserverService.addObserver(this, "interface-scheme", 0);
+    observerSvc.addObserver(this, "interface-scheme-changed", 0);
 };
 
 exports.MarginController.prototype = {
@@ -87,6 +93,10 @@ exports.MarginController.prototype = {
         scimoz.setMarginMaskN(MARGIN_CHANGEMARGIN, existing_markermask | MARKER_MASK);
         scimoz.setMarginWidthN(MARGIN_CHANGEMARGIN, MARGIN_CHANGEMARGIN_WIDTH);
         scimoz.setMarginSensitiveN(MARGIN_CHANGEMARGIN, true);
+    },
+    
+    observe: function() {
+        this._initMarkerStyles();
     },
 
 
