@@ -152,7 +152,7 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
         {
             return;
         }
-
+        
         window.removeEventListener("click", panelBlurHandler, false);
         panel.hidePopup();
     };
@@ -200,6 +200,9 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
         }, 50);
     }
     var panelHiddenFunc = function(event) {
+        if (event.originalTarget != panel)
+            return;
+        
         undoButton.removeEventListener("command", undoTextFunc, false);
         iframe.removeEventListener("load", iframeLoadedFunc, true);
         panel.removeEventListener("popuphidden", panelHiddenFunc, true);
