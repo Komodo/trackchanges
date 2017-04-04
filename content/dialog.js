@@ -142,16 +142,24 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
     var undoButton = document.getElementById('changeTracker_undo');
     iframe.setAttribute("src", htmlFile.URI);
     var [x, y] = view._last_mousemove_xy;
+    var screenX = 0;
+    var screenY = 0;
+    
+    var mouseIsOnPanel = function()  {
+        var bo = panel.boxObject;
+        if ((screenX >= bo.screenX && screenX < (bo.screenX + bo.width)) &&
+            (screenY >= bo.screenY && screenY < (bo.screenY + bo.height)))
+        {
+            return true;
+        }
+        
+        return false;
+    };
 
     // Event handlers.
     var panelBlurHandler = function(e) {
         if (panel.state != "open") return;
-        var bo = panel.boxObject;
-        if ((e.screenX > bo.screenX && e.screenX < (bo.screenX + bo.width)) &&
-            (e.screenY > bo.screenY && e.screenY < (bo.screenY + bo.height)))
-        {
-            return;
-        }
+        if (mouseIsOnPanel()) return;
         
         window.removeEventListener("click", panelBlurHandler, false);
         panel.hidePopup();
@@ -197,6 +205,7 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
             panel.addEventListener("popuphidden", panelHiddenFunc, true);
             panel.addEventListener("keypress", escapeHandler, false);
             window.addEventListener("click", panelBlurHandler, false);
+            window.addEventListener("mousemove", mouseMove);
         }, 50);
     }
     var panelHiddenFunc = function(event) {
@@ -208,8 +217,14 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
         panel.removeEventListener("popuphidden", panelHiddenFunc, true);
         panel.removeEventListener("keypress", escapeHandler, false);
         window.removeEventListener("click", panelBlurHandler, false);
+        window.removeEventListener("mousemove", mouseMove);
       
         require("ko/editor").focus();
+    };
+    
+    var mouseMove = function(event) {
+        screenX = event.screenX;
+        screenY = event.screenY;
     };
     
     iframe.addEventListener("load", iframeLoadedFunc, true);
