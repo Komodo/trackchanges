@@ -61,7 +61,7 @@ exports.showChanges = function(tracker, lineNo) {
     // Build up diffCodes = this.view.koDoc.diffStringsAsChangeInstructions(lineBefore, lineAfter);
     // and use that info to show how lines differ internally.
     var htmlLines = [
-        '<html>',
+        '<html class="dialog">',
         '<head>',
         '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
         '<link rel="stylesheet" type="text/css" href="less://trackchanges/skin/trackchanges.less">',
@@ -71,6 +71,7 @@ exports.showChanges = function(tracker, lineNo) {
         '   font-size: ' + fontSize + fontUnit + ' !important;',
         '}',
         '</style>',
+        '</head>',
         '<body id="changeTrackerFrame">',
         '<pre class="header">',
         ('@@ -'
@@ -93,6 +94,7 @@ exports.showChanges = function(tracker, lineNo) {
     concat(noNewlineAtEndOfNewLines).
     concat([
             '</pre>',
+            '</body>',
             '</html>',
             '']);
     htmlFile.puts(htmlLines.join("\n"));
@@ -180,20 +182,12 @@ exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
             panel.focus();
             undoButton.focus();
 
-            if ( ! ("initDim" in panel))
-            {
-                panel.initDim = {
-                    height: panel.boxObject.height
-                }
-            }
-
             var body = iframe.contentWindow.document.body;
-
-            iframe.initDim = {
-                height: body.scrollHeight
+            var height = body.offsetHeight;
+            if (height > 400) {
+                height = 400;
             }
-
-            iframe.style.height = (body.offsetHeight + 10) + "px";
+            iframe.style.height = (height + 10) + "px";
             
             fileSvc.deleteTempFile(htmlFile.path, true);
             undoButton.addEventListener("command", undoTextFunc, false);
