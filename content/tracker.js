@@ -12,11 +12,11 @@ var log = require("ko/logging").getLogger("CT::tracker.js");
 //log.setLevel(ko.logging.LOG_DEBUG);
 
 exports.ChangeTracker = function ChangeTracker(view) {
-    this.enabled = ko.prefs.getBoolean('trackchanges_enabled', true);
+    this.enabled = require("ko/prefs").getBoolean('trackchanges_enabled', true);
     this.view = view;
     this._timeoutId = null;
     // Watch for view preference changes.
-    this.viewPrefObserverService = ko.prefs.prefObserverService;
+    this.viewPrefObserverService = require("ko/prefs").prefObserverService;
     this.viewPrefObserverService.addObserver(this, 'trackchanges_enabled', false);
 
     if (!this.enabled) {
@@ -134,7 +134,7 @@ exports.ChangeTracker.prototype.getFormattedPatch = function() {
 
 exports.ChangeTracker.prototype.observe = function(doc, topic, data) {
     if (topic == 'trackchanges_enabled') {
-        this.enabled = ko.prefs.getBoolean(topic, true);
+        this.enabled = require("ko/prefs").getBoolean(topic, true);
         if (this.enabled) {
             this.changeTrackingOn();
             // Show updates immediately.
