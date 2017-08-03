@@ -5,6 +5,8 @@
 
 var { Ci, Cr, Cc } = require("chrome");
 var timers = require("sdk/timers");
+const w = require("ko/windows").getMain();
+const ko = w.ko;
 
 const CHANGE_TRACKER_TIMEOUT_DELAY = 500; // msec
 
