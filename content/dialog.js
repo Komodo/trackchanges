@@ -2,11 +2,13 @@ const { Cc, Ci } = require("chrome");
 const color = require("ko/color");
 
 var log = require("ko/logging").getLogger("CT::dialog.js");
-log.setLevel(ko.logging.LOG_DEBUG);
 
 var fileSvc = Cc["@activestate.com/koFileService;1"].getService(Ci.koIFileService);
 
-exports.showChanges = function(tracker, lineNo) {
+exports.showChanges = function(tracker, lineNo, window) {
+    var ko = window.ko;
+    var document = window.document;
+
     var changeType = tracker.margin.changeTypeAtLine(lineNo);
     if (!changeType) {
         return;
@@ -133,10 +135,12 @@ exports.showChanges = function(tracker, lineNo) {
         }
     };
     // Now make a panel with an iframe, point the iframe to htmlURI, and go
-    this.createPanel(tracker, htmlFile, undoTextFunc);
+    this.createPanel(tracker, htmlFile, undoTextFunc, window);
 };
 
-exports.createPanel = function(tracker, htmlFile, undoTextFunc) {
+exports.createPanel = function(tracker, htmlFile, undoTextFunc, window) {
+    var ko = window.ko;
+    var document = window.document;
     var view = tracker.view;
     var panel = document.getElementById('changeTracker_panel');
     panel.hidePopup();

@@ -215,7 +215,7 @@ exports.ChangeTracker.prototype.markChanges = function (dcount, deletions, icoun
  */
 exports.ChangeTracker.prototype.showChanges = function(lineNo) {
     var dialog = require("./dialog");
-    dialog.showChanges(this, lineNo);
+    dialog.showChanges(this, lineNo, window);
 }
 
 /**
